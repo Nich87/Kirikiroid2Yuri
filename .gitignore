@@ -40,3 +40,6 @@ script/CMakeFiles/
 script/Makefile
 script/cmake_install.cmake
 script/src/
+project/android/app/.classpath
+project/android/app/.project
+project/android/app/.settings/
