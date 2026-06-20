@@ -234,8 +234,12 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                 final float xPointerDown = pMotionEvent.getX(indexPointerDown);
                 final float yPointerDown = pMotionEvent.getY(indexPointerDown);
 
-                // Direct call (not queueEvent) so touch works during modal loops
-                Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionDown(idPointerDown, xPointerDown, yPointerDown);
+                this.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionDown(idPointerDown, xPointerDown, yPointerDown);
+                    }
+                });
                 break;
 
             case MotionEvent.ACTION_DOWN:
@@ -244,8 +248,12 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                 final float xDown = xs[0];
                 final float yDown = ys[0];
 
-                // Direct call (not queueEvent) so touch works during modal loops
-                Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionDown(idDown, xDown, yDown);
+                this.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionDown(idDown, xDown, yDown);
+                    }
+                });
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -256,14 +264,22 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                             final int[] idsMove = new int[]{0};
                             final float[] xsMove = new float[]{xs[i]};
                             final float[] ysMove = new float[]{ys[i]};
-                            // Direct call (not queueEvent) so touch works during modal loops
-                            Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionMove(idsMove, xsMove, ysMove);
+                            this.queueEvent(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionMove(idsMove, xsMove, ysMove);
+                                }
+                            });
                             break;
                         }
                     }
                 } else {
-                    // Direct call (not queueEvent) so touch works during modal loops
-                    Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionMove(ids, xs, ys);
+                    this.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionMove(ids, xs, ys);
+                        }
+                    });
                 }
                 break;
 
@@ -276,8 +292,12 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                 final float xPointerUp = pMotionEvent.getX(indexPointUp);
                 final float yPointerUp = pMotionEvent.getY(indexPointUp);
 
-                // Direct call (not queueEvent) so touch works during modal loops
-                Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionUp(idPointerUp, xPointerUp, yPointerUp);
+                this.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionUp(idPointerUp, xPointerUp, yPointerUp);
+                    }
+                });
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -286,8 +306,12 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                 final float xUp = xs[0];
                 final float yUp = ys[0];
 
-                // Direct call (not queueEvent) so touch works during modal loops
-                Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionUp(idUp, xUp, yUp);
+                this.queueEvent(new Runnable() {
+                    @Override
+                    public void run() {
+                        Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionUp(idUp, xUp, yUp);
+                    }
+                });
                 break;
 
             case MotionEvent.ACTION_CANCEL:
@@ -298,14 +322,22 @@ public class Cocos2dxGLSurfaceView extends GLSurfaceView {
                             final int[] idsCancel = new int[]{0};
                             final float[] xsCancel = new float[]{xs[i]};
                             final float[] ysCancel = new float[]{ys[i]};
-                            // Direct call (not queueEvent) so touch works during modal loops
-                            Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionCancel(idsCancel, xsCancel, ysCancel);
+                            this.queueEvent(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionCancel(idsCancel, xsCancel, ysCancel);
+                                }
+                            });
                             break;
                         }
                     }
                 } else {
-                    // Direct call (not queueEvent) so touch works during modal loops
-                    Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionCancel(ids, xs, ys);
+                    this.queueEvent(new Runnable() {
+                        @Override
+                        public void run() {
+                            Cocos2dxGLSurfaceView.this.mCocos2dxRenderer.handleActionCancel(ids, xs, ys);
+                        }
+                    });
                 }
                 break;
         }
