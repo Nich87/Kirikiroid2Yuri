@@ -836,6 +836,7 @@ protected:
 	}
 
 	void InternalUpdate(const void *pixel, int pitch, int x, int y, int w, int h) {
+		if (!pixel) return;
 		if (_scaleW != 1.f || _scaleH != 1.f) {
 			RestoreNormalSize();
 		}
@@ -1110,6 +1111,7 @@ public:
 	}
 	
 	void UpdateTextureData(GLTextureInfo &texinfo, const tTVPRect &rc) {
+		if (!Bitmap) return;
 		unsigned int pixsize = Format & 0xF;
 		GLenum pixfmt = GL_RGBA;
 		GLenum internalfmt = GL_RGBA;
@@ -3966,13 +3968,13 @@ public:
 
 			// pass to OperateTriangles
 			tTVPPointD pttar[6] = {
-				dstpt[0], // вСио
-				dstpt[1], // срио
-				dstpt[2], // вСоб
+				dstpt[0], // О©╫О©╫О©╫О©╫
+				dstpt[1], // О©╫О©╫О©╫О©╫
+				dstpt[2], // О©╫О©╫О©╫О©╫
 
-				dstpt[1], // срио
-				dstpt[2], // вСоб
-				dstpt[3], // сроб
+				dstpt[1], // О©╫О©╫О©╫О©╫
+				dstpt[2], // О©╫О©╫О©╫О©╫
+				dstpt[3], // О©╫О©╫О©╫О©╫
 			}, pttex[6] = {
 				srcpt[0],
 				srcpt[1],
