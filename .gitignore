@@ -31,3 +31,12 @@ project/android/.project
 project/android/.settings/
 kimiyume
 .serena
+# Android profiler
+*.hprof
+
+# Script build artifacts
+script/CMakeCache.txt
+script/CMakeFiles/
+script/Makefile
+script/cmake_install.cmake
+script/src/
