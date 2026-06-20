@@ -35,6 +35,11 @@
 
 USING_NS_CC;
 
+#ifdef __ANDROID__
+#include <mutex>
+#include <vector>
+#endif
+
 enum SCENE_ORDER {
 	GAME_SCENE_ORDER,
 	GAME_CONSOLE_ORDER,
@@ -113,10 +118,109 @@ void TVPControlAdDialog(int adType, int arg1, int arg2);
 // void TVPShowIME(int x, int y, int w, int h);
 // void TVPHideIME();
 
+#ifdef __ANDROID__
+// Thread-safe touch event queue: touch events are pushed from the Java UI thread
+// via TVPPushTouch* (called from TouchesJni.cpp) and drained from the GL thread
+// in TVPDrawSceneOnce. This ensures touch events work even when the GL thread is
+// blocked in ShowWindowAsModal's modal loop.
+struct TouchEventData {
+    enum Type { BEGIN, END, MOVE, CANCEL } type;
+    int id;
+    float x, y;
+    std::vector<int> ids;
+    std::vector<float> xs, ys;
+};
+
+static std::mutex g_touchQueueMutex;
+static std::vector<TouchEventData> g_touchQueue;
+
+extern "C" void TVPPushTouchBegin(int id, float x, float y) {
+    std::lock_guard<std::mutex> lock(g_touchQueueMutex);
+    TouchEventData e;
+    e.type = TouchEventData::BEGIN;
+    e.id = id;
+    e.x = x;
+    e.y = y;
+    g_touchQueue.push_back(std::move(e));
+}
+
+extern "C" void TVPPushTouchEnd(int id, float x, float y) {
+    std::lock_guard<std::mutex> lock(g_touchQueueMutex);
+    TouchEventData e;
+    e.type = TouchEventData::END;
+    e.id = id;
+    e.x = x;
+    e.y = y;
+    g_touchQueue.push_back(std::move(e));
+}
+
+extern "C" void TVPPushTouchMove(int num, int ids[], float xs[], float ys[]) {
+    std::lock_guard<std::mutex> lock(g_touchQueueMutex);
+    TouchEventData e;
+    e.type = TouchEventData::MOVE;
+    e.ids.assign(ids, ids + num);
+    e.xs.assign(xs, xs + num);
+    e.ys.assign(ys, ys + num);
+    g_touchQueue.push_back(std::move(e));
+}
+
+extern "C" void TVPPushTouchCancel(int num, int ids[], float xs[], float ys[]) {
+    std::lock_guard<std::mutex> lock(g_touchQueueMutex);
+    TouchEventData e;
+    e.type = TouchEventData::CANCEL;
+    e.ids.assign(ids, ids + num);
+    e.xs.assign(xs, xs + num);
+    e.ys.assign(ys, ys + num);
+    g_touchQueue.push_back(std::move(e));
+}
+
+static void TVPProcessTouchQueue() {
+    std::vector<TouchEventData> queue;
+    {
+        std::lock_guard<std::mutex> lock(g_touchQueueMutex);
+        queue.swap(g_touchQueue);
+    }
+    auto glview = Director::getInstance()->getOpenGLView();
+    if (!glview) return;
+    for (auto &e : queue) {
+        switch (e.type) {
+        case TouchEventData::BEGIN: {
+            intptr_t idlong = e.id;
+            glview->handleTouchesBegin(1, &idlong, &e.x, &e.y);
+            break;
+        }
+        case TouchEventData::END: {
+            intptr_t idlong = e.id;
+            glview->handleTouchesEnd(1, &idlong, &e.x, &e.y);
+            break;
+        }
+        case TouchEventData::MOVE: {
+            std::vector<intptr_t> idlongs(e.ids.size());
+            for (size_t i = 0; i < e.ids.size(); i++) idlongs[i] = e.ids[i];
+            glview->handleTouchesMove((int)e.ids.size(), idlongs.data(), e.xs.data(), e.ys.data());
+            break;
+        }
+        case TouchEventData::CANCEL: {
+            std::vector<intptr_t> idlongs(e.ids.size());
+            for (size_t i = 0; i < e.ids.size(); i++) idlongs[i] = e.ids[i];
+            glview->handleTouchesCancel((int)e.ids.size(), idlongs.data(), e.xs.data(), e.ys.data());
+            break;
+        }
+        }
+    }
+}
+#endif // __ANDROID__
+
 int TVPDrawSceneOnce(int interval) {
 	static tjs_uint64 lastTick = TVPGetRoughTickCount32();
 	tjs_uint64 curTick = TVPGetRoughTickCount32();
 	int remain = interval - (curTick - lastTick);
+#ifdef __ANDROID__
+	// Drain queued touch events from the Java UI thread. Must run every
+	// call (not just when rendering) so that ShowWindowAsModal's modal
+	// loop can process touch events while the GL thread is blocked.
+	TVPProcessTouchQueue();
+#endif
 	if (remain <= 0) {
 		if (_postUpdate) _postUpdate();
 		Director* director = Director::getInstance();
@@ -1215,7 +1319,7 @@ public:
 	virtual void OnKeyPress(tjs_uint16 vk, int repeat, bool prevkeystate, bool convertkey) override {
 		if (TJSNativeInstance && vk) {
 			if (UseMouseKey && (vk == 0x1b || vk == 13 || vk == 32)) return;
-			// UNICODE ¤Ê¤Î¤Ç¤½¤Î¤Þ¤Þ¶É¤·¤Æ¤·¤Þ¤¦
+			// UNICODE ï¿½Ê¤Î¤Ç¤ï¿½ï¿½Î¤Þ¤Þ¶É¤ï¿½ï¿½Æ¤ï¿½ï¿½Þ¤ï¿½
 			TVPPostInputEvent(new tTVPOnKeyPressInputEvent(TJSNativeInstance, vk));
 		}
 	}
@@ -1355,7 +1459,7 @@ public:
 						// this is the main window
 						iTJSDispatch2 * obj = TJSNativeInstance->GetOwnerNoAddRef();
 						obj->Invalidate(0, NULL, NULL, obj);
-						// TJSNativeInstance = NULL; // ¤³¤Î¶ÎëA¤Ç¤Ï¼È¤Ëthis¤¬Ï÷³ý¤µ¤ì¤Æ¤¤¤ë¤¿¤á¡¢¥á¥ó¥Ð©`¤Ø¥¢¥¯¥»¥¹¤·¤Æ¤Ï¤¤¤±¤Ê¤¤
+						// TJSNativeInstance = NULL; // ï¿½ï¿½ï¿½Î¶ï¿½ï¿½Aï¿½Ç¤Ï¼È¤ï¿½thisï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¤ï¿½ï¿½ë¤¿ï¿½á¡¢ï¿½ï¿½ï¿½Ð©`ï¿½Ø¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¤Ï¤ï¿½ï¿½ï¿½ï¿½Ê¤ï¿½
 					}
 				} else {
 					delete this;
