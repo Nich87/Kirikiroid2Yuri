@@ -1,36 +1,32 @@
 package org.tvp.kirikiri2;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.Settings;
 import android.os.Message;
 import android.os.storage.StorageManager;
-import android.preference.PreferenceManager;
-import android.provider.BaseColumns;
-import android.provider.MediaStore;
+import android.os.storage.StorageVolume;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -41,14 +37,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.preference.PreferenceManager;
+
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import org.cocos2dx.lib.Cocos2dxActivity;
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,43 +59,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-/**
- * Utility class for handling the media store.
- */
-@SuppressWarnings("ALL")
-abstract class MediaStoreUtil {
-    public static Uri getUriFromFile(final String path,Context context) {
-        ContentResolver resolver = context.getContentResolver();
-        Cursor filecursor = resolver.query(MediaStore.Files.getContentUri("external"),
-                new String[] { BaseColumns._ID }, MediaStore.MediaColumns.DATA + " = ?",
-                new String[] { path }, MediaStore.MediaColumns.DATE_ADDED + " desc");
-        filecursor.moveToFirst();
-
-        if (filecursor.isAfterLast()) {
-            filecursor.close();
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.MediaColumns.DATA, path);
-            return resolver.insert(MediaStore.Files.getContentUri("external"), values);
-        }
-        else {
-            int imageId = filecursor.getInt(filecursor.getColumnIndex(BaseColumns._ID));
-            Uri uri = MediaStore.Files.getContentUri("external").buildUpon().appendPath(
-                    Integer.toString(imageId)).build();
-            filecursor.close();
-            return uri;
-        }
-    }
-
-    public static void addFileToMediaStore(final String path, Context context) {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        File file = new File(path);
-        Uri contentUri = Uri.fromFile(file);
-        mediaScanIntent.setData(contentUri);
-        context.sendBroadcast(mediaScanIntent);
-    }
-
-}
 
 /* This is a fake invisible editor view that receives the input and defines the
  * pan&scan region
@@ -137,9 +101,16 @@ class DummyEdit extends View implements View.OnKeyListener {
         // FIXME: And determine the keyboard presence doing this: http://stackoverflow.com/questions/2150078/how-to-check-visibility-of-software-keyboard-in-android
         // FIXME: An even more effective way would be if Android provided this out of the box, but where would the fun be in that :)
         if (event.getAction()==KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                // On Baklava+, the OnBackInvokedCallback handles the native key action,
+                // only hide the text edit here.
+                if (KR2Activity.mTextEdit != null && KR2Activity.mTextEdit.getVisibility() == View.VISIBLE) {
+                    KR2Activity.hideTextInput();
+                }
+                return true;
+            }
             if (KR2Activity.mTextEdit != null && KR2Activity.mTextEdit.getVisibility() == View.VISIBLE) {
             	KR2Activity.hideTextInput();
-            	//KR2Activity.nativeKeyboardFocusLost();
             }
         }
         return super.onKeyPreIme(keyCode, event);
@@ -220,10 +191,7 @@ class SDLInputConnection extends BaseInputConnection {
 }
 
 @SuppressWarnings("ALL")
-public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
-
-    public static final int RC_WRITE_EXTERNAL = 1;
-    public static final int RC_PHONE_STATE = 2;
+public class KR2Activity extends Cocos2dxActivity {
 
 	static ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
 	static ActivityManager mAcitivityManager = null;
@@ -244,57 +212,7 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
 		return mDbgMemoryInfo.getTotalPss(); // in kB
 	}
 
-    private static void requestPhoneState() {
-        // Permission has not been granted and must be requested.
-        if (ActivityCompat.shouldShowRequestPermissionRationale(sInstance,
-                Manifest.permission.READ_PHONE_STATE)) {
-            // Provide an additional rationale to the user if the permission was not granted
-            // and the user would benefit from additional context for the use of the permission.
-            // Display a SnackBar with cda button to request the missing permission.
-            ActivityCompat.requestPermissions(sInstance,
-                    new String[]{Manifest.permission.READ_PHONE_STATE},
-                    RC_PHONE_STATE);
-
-        } else {
-            // Request the permission. The result will be received in onRequestPermissionResult().
-            ActivityCompat.requestPermissions(sInstance,
-                    new String[]{Manifest.permission.READ_PHONE_STATE}, RC_PHONE_STATE);
-        }
-    }
-
-    private static void requestExternalWrite() {
-        // Permission has not been granted and must be requested.
-        if (ActivityCompat.shouldShowRequestPermissionRationale(sInstance,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            // Provide an additional rationale to the user if the permission was not granted
-            // and the user would benefit from additional context for the use of the permission.
-            // Display a SnackBar with cda button to request the missing permission.
-            ActivityCompat.requestPermissions(sInstance,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    RC_WRITE_EXTERNAL);
-
-        } else {
-            // Request the permission. The result will be received in onRequestPermissionResult().
-            ActivityCompat.requestPermissions(sInstance,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, RC_WRITE_EXTERNAL);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case RC_PHONE_STATE:
-                Log.d("Krkr2", "onRequestPermissionsResult: PHONE STATE");
-                break;
-            case RC_WRITE_EXTERNAL:
-                Log.d("Krkr2", "onRequestPermissionsResult: WRITE EXTERNAL");
-                break;
-        }
-    }
-
-
-    static public String getDeviceId() { // ## fix android.permission.READ_PRIVILEGED_PHONE_STATE
+    static public String getKrkrDeviceId() { // ## fix android.permission.READ_PRIVILEGED_PHONE_STATE
 		return "";
 	}
 
@@ -306,7 +224,21 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
 		sInstance = this;
         Sp = PreferenceManager.getDefaultSharedPreferences(this);
 		super.onCreate(savedInstanceState);
+
+		checkAllFilesAccessPermission();
 	
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+			getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+				OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+				new OnBackInvokedCallback() {
+					@Override
+					public void onBackInvoked() {
+						nativeKeyAction(KeyEvent.KEYCODE_BACK, true);
+						nativeKeyAction(KeyEvent.KEYCODE_BACK, false);
+					}
+				});
+		}
+
 		if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP) {
 			for(String path : getExtSdCardPaths(this)) {
 		        if (!isWritableNormalOrSaf(path)) {
@@ -315,9 +247,6 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
 			}
 		}
 		
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestExternalWrite();
-        }
 		initDump(this.getFilesDir().getAbsolutePath() + "/dump");
 	}
 	
@@ -536,6 +465,24 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
     Method mGetVolumeState = null;
     
     public String[] getStoragePath() {
+    	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+    		if (mStorageManager == null) {
+    			mStorageManager = (StorageManager) getSystemService(STORAGE_SERVICE);
+    		}
+    		List<StorageVolume> volumes = mStorageManager.getStorageVolumes();
+    		List<String> result = new ArrayList<>();
+    		for (StorageVolume volume : volumes) {
+    			File dir = volume.getDirectory();
+    			String state = volume.getState();
+    			if (dir != null && (Environment.MEDIA_MOUNTED.equals(state)
+    					|| Environment.MEDIA_MOUNTED_READ_ONLY.equals(state))) {
+    				result.add(dir.getAbsolutePath());
+    			}
+    		}
+    		return result.toArray(new String[0]);
+    	}
+
+    	// Legacy fallback using reflection
     	String[] ret = new String[0];
     	if(mStorageManager == null) {
         	mStorageManager = (StorageManager)getSystemService(STORAGE_SERVICE);
@@ -622,6 +569,11 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
         public boolean onKeyDown(final int pKeyCode, final KeyEvent pKeyEvent) {
             switch (pKeyCode) {
                 case KeyEvent.KEYCODE_BACK:
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                        return false;
+                    }
+                    nativeKeyAction(pKeyCode, true);
+                    return true;
                 case KeyEvent.KEYCODE_MENU:
                 case KeyEvent.KEYCODE_DPAD_LEFT:
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
@@ -641,6 +593,11 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
         public boolean onKeyUp(final int pKeyCode, final KeyEvent pKeyEvent) {
             switch (pKeyCode) {
                 case KeyEvent.KEYCODE_BACK:
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                        return false;
+                    }
+                    nativeKeyAction(pKeyCode, false);
+                    return true;
                 case KeyEvent.KEYCODE_MENU:
                 case KeyEvent.KEYCODE_DPAD_LEFT:
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
@@ -799,6 +756,25 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
             })
             .show();
     }
+
+    static void checkAllFilesAccessPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(sInstance);
+            builder
+                .setTitle("All files access")
+                .setMessage("Please allow all files access so that game data (XP3 files) can be read from Download or other folders.")
+                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                        intent.setData(Uri.parse("package:" + sInstance.getPackageName()));
+                        sInstance.startActivity(intent);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        }
+    }
     
     static final boolean isWritable(final File file) {
         if(file==null)
@@ -817,6 +793,9 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
         catch (FileNotFoundException e) {
             return false;
         }
+        catch (SecurityException e) {
+            return false;
+        }
         boolean result = file.canWrite();
 
         // Ensure that file is not created during this process.
@@ -828,57 +807,55 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
     }
 
     static final boolean isWritableNormal(final String path) {
-        boolean ret = isWritableNormalOrSaf(path);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestExternalWrite();
-            return isWritableNormalOrSaf(path);
-        }
-        return ret;
+        return isWritableNormalOrSaf(path);
     }
 
 
     static final boolean isWritableNormalOrSaf(final String path) {
+        try {
+            Log.i("kr2activaty","check path " + path + "permision");
 
-        Log.i("kr2activaty","check path " + path + "permision");
+        	Context c = sInstance;
+        	File folder = new File(path);
+        	folder.mkdir();
+        	// Log.d("ke2activate", String.format("%b  and  %b", folder.exists(), folder.isDirectory()));
+            if (!folder.exists() || !folder.isDirectory()) {
+               return false;
+            }
 
-    	Context c = sInstance;
-    	File folder = new File(path);
-    	folder.mkdir();
-    	// Log.d("ke2activate", String.format("%b  and  %b", folder.exists(), folder.isDirectory()));
-        if (!folder.exists() || !folder.isDirectory()) {
-           return false;
-        }
+            // Find a non-existing file in this directory.
+            int i = 0;
+            File file;
+            do {
+                String fileName = "AugendiagnoseDummyFile" + (++i);
+                file = new File(folder, fileName);
+            }
+            while (file.exists());
 
-        // Find a non-existing file in this directory.
-        int i = 0;
-        File file;
-        do {
-            String fileName = "AugendiagnoseDummyFile" + (++i);
-            file = new File(folder, fileName);
-        }
-        while (file.exists());
+            // First check regular writability
+            Log.d("ke2activate", String.format("%b  ", isWritable(file)));
+            if (isWritable(file)) {
+                return true;
+            }
 
-        // First check regular writability
-        Log.d("ke2activate", String.format("%b  ", isWritable(file)));
-        if (isWritable(file)) {
-            return true;
-        }
+            // Next check SAF writability.
+            DocumentFile document = getDocumentFile(file, false,c);
 
-        // Next check SAF writability.
-        DocumentFile document = getDocumentFile(file, false,c);
+            if (document == null) {
+                return false;
+            }
 
-        if (document == null) {
+            // This should have created the file - otherwise something is wrong with access URL.
+            boolean result = document.canWrite() && file.exists();
+
+            // Ensure that the dummy file is not remaining.
+            document.delete();
+            DocumentFile.fromFile(folder).delete();
+
+            return result;
+        } catch (SecurityException e) {
             return false;
         }
-
-        // This should have created the file - otherwise something is wrong with access URL.
-        boolean result = document.canWrite() && file.exists();
-
-        // Ensure that the dummy file is not remaining.
-        document.delete();
-        DocumentFile.fromFile(folder).delete();
-
-        return result;
     }
     
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -1001,25 +978,6 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
         		return true;
         }
         
-        // Try Media Store Hack
-        if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
-        	try {
-				FileInputStream input = new FileInputStream(file);
-	        	int filesize = (int) file.length();
-				byte []buffer = new byte[filesize];
-				input.read(buffer);
-				input.close();
-            	OutputStream out = MediaStoreHack.getOutputStream(sInstance, target.getAbsolutePath());
-                out.write(buffer);
-                out.close();
-                return MediaStoreHack.delete(sInstance, file);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				return false;
-				//e.printStackTrace();
-			}
-        }
-        
     	return false;
     }
     
@@ -1056,21 +1014,6 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
             return document.delete();
         }
 
-        // Try the Kitkat workaround.
-        if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
-            ContentResolver resolver = sInstance.getContentResolver();
-
-            try {
-                Uri uri = MediaStoreHack.getUriFromFile(file.getAbsolutePath(),sInstance);
-                resolver.delete(uri, null, null);
-                return !file.exists();
-            }
-            catch (Exception e) {
-                Log.e("FileUtils", "Error when deleting file " + file.getAbsolutePath(), e);
-                return false;
-            }
-        }
-
         return !file.exists();
     }
     
@@ -1086,10 +1029,7 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
 			        // Storage Access Framework
 			    DocumentFile targetDocument = getDocumentFile(target, false,context);
 			    outStream = context.getContentResolver().openOutputStream(targetDocument.getUri());
-			} else if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
-			    // Workaround for Kitkat ext SD card
-		        return MediaStoreHack.getOutputStream(context,target.getPath());
-		        }
+			}
 		    }
 		} catch (Exception e) {
 		    Log.e("FileUtils",
@@ -1130,10 +1070,6 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
                 catch (IOException e) {
                     // e.printStackTrace();
                 }
-            } else if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
-                // Workaround for Kitkat ext SD card
-                Uri uri = MediaStoreHack.getUriFromFile(target.getAbsolutePath(),sInstance);
-                out = sInstance.getContentResolver().openOutputStream(uri);
             } else {
                 return false;
             }
@@ -1168,15 +1104,6 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
             return document.exists();
         }
         
-        // Try the Kitkat workaround.
-        if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
-            try {
-            	return MediaStoreHack.mkdir(sInstance,file);
-            } catch (IOException e) {
-                //return false;
-            }
-        }
-        
     	return false;
     }
 
@@ -1203,7 +1130,18 @@ public class KR2Activity extends Cocos2dxActivity implements ActivityCompat.OnRe
 
     private static native boolean nativeGetHideSystemButton();
     void hideSystemUI() {
-    	if(nativeGetHideSystemButton() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+    	if (!nativeGetHideSystemButton()) return;
+
+    	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+    		WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+    		controller.hide(WindowInsetsCompat.Type.systemBars());
+    		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+    	} else {
+    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+    			getWindow().getAttributes().layoutInDisplayCutoutMode =
+    				WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+    		}
     		doSetSystemUiVisibility();
     	}
     }

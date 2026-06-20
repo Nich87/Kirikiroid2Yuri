@@ -1,0 +1,29 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace 'org.cocos2dx.lib'
+    compileSdkVersion PROP_COMPILE_SDK_VERSION.toInteger()
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        minSdkVersion PROP_MIN_SDK_VERSION.toInteger()
+        targetSdkVersion PROP_TARGET_SDK_VERSION.toInteger()
+    }
+    sourceSets.main {
+        java.srcDirs = ["../java/src"]
+        aidl.srcDirs = ["../java/src"]
+    }
+    buildFeatures {
+        buildConfig true
+        aidl true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: '../java/libs', include: ['*.jar'])
+}

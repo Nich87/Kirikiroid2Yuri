@@ -139,7 +139,7 @@ std::string TVPGetDeviceID()
 // 	if (ret.empty())
 	{
 		JniMethodInfo methodInfo;
-		if (JniHelper::getStaticMethodInfo(methodInfo, KR2ActJavaPath, "getDeviceId", "()Ljava/lang/String;"))
+		if (JniHelper::getStaticMethodInfo(methodInfo, KR2ActJavaPath, "getKrkrDeviceId", "()Ljava/lang/String;"))
 		{
 			jstring result = (jstring)methodInfo.env->CallStaticObjectMethod(methodInfo.classID, methodInfo.methodID);
 			ret = JniHelper::jstring2string(result);

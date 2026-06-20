@@ -15,6 +15,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Android")
     add_library(${PROJECT_NAME} SHARED 
         project/android/app/cpp/krkr2_android.cpp
     )
+    target_link_options(${PROJECT_NAME} PRIVATE -Wl,-z,max-page-size=16384)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     message("${CMAKE_SYSTEM_NAME} not support yet")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")

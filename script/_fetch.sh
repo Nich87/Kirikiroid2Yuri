@@ -181,13 +181,16 @@ function fetch_cocos2dx()
     fi
 }
 
-# android 
+# android
 function fetch_asset()
 {
     if ! [ -d "$CMAKELISTS_PATH/assets" ]; then
-        wget https://github.com/YuriSizuku/Kirikiroid2Yuri/releases/download/1.3.9_yuri/Kirikiroid2_yuri_1.3.9.apk \
-            -O $CMAKELISTS_PATH/thirdparty/port/Kirikiroid2_yuri_1.3.9.apk
-        7z x -o$CMAKELISTS_PATH $CMAKELISTS_PATH/thirdparty/port/Kirikiroid2_yuri_1.3.9.apk assets
+        APK_PATH=$CMAKELISTS_PATH/thirdparty/port/Kirikiroid2_yuri_1.3.9.apk
+        if ! [ -f "$APK_PATH" ]; then
+            wget https://github.com/YuriSizuku/Kirikiroid2Yuri/releases/download/1.3.9_yuri/Kirikiroid2_yuri_1.3.9.apk \
+                -O "$APK_PATH"
+        fi
+        unzip -q "$APK_PATH" 'assets/*' -d "$CMAKELISTS_PATH"
     fi
 }
 

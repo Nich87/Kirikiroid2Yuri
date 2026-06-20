@@ -4,7 +4,9 @@ build/**
 build_*/**
 thirdparty/build/**
 thirdparty/port/**
+thirdparty_*.tar.gz
 .vscode/settings.json
+.slim/deepwork/
 
 # android
 local.properties
@@ -23,3 +25,7 @@ project/android/.idea/inspectionProfiles
 project/android/app/.cxx/**
 project/android/app/debug/**
 project/android/app/release/**
+project/android/.project
+project/android/.settings/
+kimiyume
+.serena
