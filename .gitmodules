@@ -1,0 +1,4 @@
+[submodule "thirdparty/port/axmol"]
+	path = thirdparty/port/axmol
+	url = https://github.com/axmolengine/axmol.git
+	branch = release/2.x

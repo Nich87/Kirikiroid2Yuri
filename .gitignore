@@ -4,6 +4,7 @@ build/**
 build_*/**
 thirdparty/build/**
 thirdparty/port/**
+!thirdparty/port/axmol
 !thirdparty/port/cocos2d-x/cocos/platform/android/jni/TouchesJni.cpp
 !thirdparty/port/cocos2d-x/cocos/platform/android/java/src/org/cocos2dx/lib/Cocos2dxGLSurfaceView.java
 thirdparty_*.tar.gz
