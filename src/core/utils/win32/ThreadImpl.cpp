@@ -19,7 +19,7 @@
 #include "MsgIntf.h"
 #include "DebugIntf.h"
 
-#if defined(CC_TARGET_OS_IPHONE) || defined(__aarch64__)
+#if (AX_TARGET_PLATFORM == AX_PLATFORM_IOS) || defined(__aarch64__)
 #else
 //#define USING_THREADPOOL11
 #endif

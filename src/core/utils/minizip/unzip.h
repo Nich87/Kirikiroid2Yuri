@@ -127,6 +127,7 @@ typedef struct unz_file_info64_s
     uLong internal_fa;          /* internal file attributes        2 bytes */
     uLong external_fa;          /* external file attributes        4 bytes */
 
+    ZPOS64_T offset_curfile;
     tm_unz tmu_date;
 } unz_file_info64;
 
@@ -148,6 +149,7 @@ typedef struct unz_file_info_s
     uLong internal_fa;          /* internal file attributes        2 bytes */
     uLong external_fa;          /* external file attributes        4 bytes */
 
+    ZPOS64_T offset_curfile;
     tm_unz tmu_date;
 } unz_file_info;
 

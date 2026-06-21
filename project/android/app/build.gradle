@@ -25,7 +25,7 @@ android {
         externalNativeBuild {
             if (PROP_BUILD_TYPE == 'cmake') {
                 cmake {
-                    version '3.22.1'
+                    version '4.3.4'
                     targets 'krkr2yuri'
                     arguments "-DCMAKE_FIND_ROOT_PATH=", "-DANDROID_STL=c++_static", "-DANDROID_TOOLCHAIN=clang", "-DANDROID_ARM_NEON=TRUE"
                     cppFlags "-frtti -fexceptions -fsigned-char"
@@ -80,15 +80,28 @@ android {
             manifest.srcFile "AndroidManifest.xml"
             java.srcDirs = ["java"]
             res.srcDirs = ["res"]
-            assets.srcDirs =["../../../assets"]
+            assets.srcDirs =["../../../assets", "build/assets"]
         }
 
     }
 
     externalNativeBuild {
         cmake {
-            version '3.22.1'
+            version '4.3.4'
             path "cpp/CMakeLists.txt"
+        }
+    }
+
+    android.applicationVariants.configureEach { variant ->
+        def variantName = variant.name.capitalize()
+        tasks.register("copy${variantName}ShaderAssets") {
+            dependsOn("externalNativeBuild${variantName}")
+            doLast {
+                copy {
+                    from "${projectDir}/build/runtime/axslc"
+                    into "${projectDir}/build/assets/axslc"
+                }
+            }
         }
     }
 
@@ -101,11 +114,21 @@ android {
 
 dependencies {
     //implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(':cocos2dx')
+    implementation project(':libaxmol')
 
     implementation "androidx.documentfile:documentfile:1.1.0"
     implementation "androidx.activity:activity:1.11.0"
     implementation "androidx.fragment:fragment:1.8.9"
     implementation "androidx.core:core:1.16.0"
     implementation "androidx.preference:preference:1.2.1"
+}
+
+project.afterEvaluate {
+    android.applicationVariants.configureEach { variant ->
+        def variantName = variant.name.capitalize()
+        def copyTask = tasks.named("copy${variantName}ShaderAssets")
+        tasks.named("merge${variantName}Assets").configure {
+            dependsOn(copyTask)
+        }
+    }
 }

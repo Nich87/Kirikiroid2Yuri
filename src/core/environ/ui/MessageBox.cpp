@@ -1,15 +1,15 @@
 #include "MessageBox.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "ui/UIButton.h"
 #include "ui/UIText.h"
 #include "ui/UIScrollView.h"
 #include "ui/UIHelper.h"
 #include "ui/UILoadingBar.h"
-#include "2d/CCLabel.h"
+#include "2d/Label.h"
 #include "ConfigManager/LocaleConfigManager.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 void TVPMessageBoxForm::show(const std::string &caption, const std::string &text, int nBtns, const std::string *btnText, const std::function<void(int)> &callback)
 {
@@ -62,7 +62,7 @@ void TVPMessageBoxForm::init(const std::string &caption, const std::string &text
 		Size textSize = _btnBody->getTitleRenderer()->getContentSize();
 		float fontSize = _btnBody->getTitleFontSize();
 		textSize.width += fontSize;
-		_btnBody->addClickEventListener([this, i](Ref* node) {
+		_btnBody->addClickEventListener([this, i](ax::Object* node) {
 			retain();
 			TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveAniNone);
 			if (_callback) _callback(i);
@@ -113,9 +113,9 @@ void TVPMessageBoxForm::bindBodyController(const NodeMap &allNodes)
 	_btnList = _btnModel->getParent();
 }
 
-void TVPMessageBoxForm::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event)
+void TVPMessageBoxForm::onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event)
 {
-	if (keyCode == cocos2d::EventKeyboard::KeyCode::KEY_BACK) {
+	if (keyCode == ax::EventKeyboard::KeyCode::KEY_BACK) {
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveAniNone);
 	}
 }
@@ -128,7 +128,7 @@ TVPSimpleProgressForm* TVPSimpleProgressForm::create()
 	return form;
 }
 
-void TVPSimpleProgressForm::initButtons(const std::vector<std::pair<std::string, std::function<void(cocos2d::Ref*)> > > &vec)
+void TVPSimpleProgressForm::initButtons(const std::vector<std::pair<std::string, std::function<void(ax::Object*)> > > &vec)
 {
 	Size btnSize = _btnCell->getContentSize();
 	float totalWidth = 0;

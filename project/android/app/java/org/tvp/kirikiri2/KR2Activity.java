@@ -46,8 +46,8 @@ import androidx.preference.PreferenceManager;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 
-import org.cocos2dx.lib.Cocos2dxActivity;
-import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
+import dev.axmol.lib.AxmolActivity;
+import dev.axmol.lib.AxmolGLSurfaceView;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -191,7 +191,7 @@ class SDLInputConnection extends BaseInputConnection {
 }
 
 @SuppressWarnings("ALL")
-public class KR2Activity extends Cocos2dxActivity {
+public class KR2Activity extends AxmolActivity {
 
 	static ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
 	static ActivityManager mAcitivityManager = null;
@@ -545,7 +545,7 @@ public class KR2Activity extends Cocos2dxActivity {
     private static native void nativeHoverMoved(final float x, final float y);
     private static native void nativeMouseScrolled(final float scroll);
     
-    class KR2GLSurfaceView extends Cocos2dxGLSurfaceView {
+    class KR2GLSurfaceView extends AxmolGLSurfaceView {
 
         public KR2GLSurfaceView(final Context context) {
             super(context);
@@ -561,8 +561,10 @@ public class KR2Activity extends Cocos2dxActivity {
         }
 
         @Override
-        public void deleteBackward() {
-        	nativeDeleteBackward();
+        public void deleteBackward(int numChars) {
+            for (int i = 0; i < numChars; ++i) {
+                nativeDeleteBackward();
+            }
         }
 
         @Override

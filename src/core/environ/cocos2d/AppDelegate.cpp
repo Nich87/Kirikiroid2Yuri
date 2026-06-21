@@ -2,7 +2,7 @@
 #include "MainScene.h"
 #include "ui/MainFileSelectorForm.h"
 #include "ui/extension/UIExtension.h"
-#include "cocostudio/FlatBuffersSerialize.h"
+// #include "cocostudio/FlatBuffersSerialize.h" // not needed
 #include "ConfigManager/LocaleConfigManager.h"
 #include "ConfigManager/GlobalConfigManager.h"
 #include "Application.h"
@@ -11,14 +11,14 @@
 #include "ui/GlobalPreferenceForm.h"
 #include "CustomFileUtils.h"
 
-USING_NS_CC;
+using namespace ax;
 
-cocos2d::FileUtils *TVPCreateCustomFileUtils();
+ax::FileUtils *TVPCreateCustomFileUtils();
 extern "C" void SDL_SetMainReady(void);
 extern std::thread::id TVPMainThreadID;
 static Size designResolutionSize(960, 640);
 bool TVPCheckStartupArg();
-cocos2d::FileUtils *TVPCreateCustomFileUtils();
+ax::FileUtils *TVPCreateCustomFileUtils();
 
 void TVPAppDelegate::applicationWillEnterForeground() {
 	::Application->OnActivate();
@@ -33,15 +33,15 @@ void TVPAppDelegate::applicationDidEnterBackground() {
 bool TVPAppDelegate::applicationDidFinishLaunching() {
 	SDL_SetMainReady();
 	TVPMainThreadID = std::this_thread::get_id();
-	cocos2d::log("applicationDidFinishLaunching");
+	ax::print("applicationDidFinishLaunching");
 	// initialize director
 	FileUtils::setDelegate(TVPCreateCustomFileUtils());
 	auto director = Director::getInstance();
-	auto glview = director->getOpenGLView();
+	auto glview = director->getGLView();
 	if (!glview) {
-		glview = GLViewImpl::create("kirikiri2 frame");
-		director->setOpenGLView(glview);
-#if CC_PLATFORM_WIN32 == CC_TARGET_PLATFORM
+		glview = RenderViewImpl::create("kirikiri2 frame");
+		director->setGLView(glview);
+#if AX_PLATFORM_WIN32 == AX_TARGET_PLATFORM
 		glview->setFrameSize(960, 640);
 #endif
 	}
@@ -70,7 +70,7 @@ bool TVPAppDelegate::applicationDidFinishLaunching() {
 	FileUtils::getInstance()->setSearchPaths(searchPath);
 
 	// turn on display FPS
-	director->setDisplayStats(false);
+	director->setStatsDisplay(false);
 
 	// set FPS. the default value is 1.0/60 if you don't call this
 	director->setAnimationInterval(1.0f / 60);
@@ -108,9 +108,9 @@ void TVPAppDelegate::initGLContextAttrs() {
 void TVPAppDelegate::applicationScreenSizeChanged(int newWidth, int newHeight)
 {
 // 	auto director = Director::getInstance();
-// 	director->getOpenGLView()->setFrameSize(newWidth, newHeight);
+// 	director->getGLView()->setFrameSize(newWidth, newHeight);
 }
 
 void TVPOpenPatchLibUrl() {
-	cocos2d::Application::getInstance()->openURL("https://zeas2.github.io/Kirikiroid2_patch/patch");
+	ax::Application::getInstance()->openURL("https://zeas2.github.io/Kirikiroid2_patch/patch");
 }

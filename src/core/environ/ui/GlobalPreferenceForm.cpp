@@ -1,14 +1,14 @@
 #include "GlobalPreferenceForm.h"
 #include "ConfigManager/LocaleConfigManager.h"
 #include "ui/UIButton.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "ui/UIListView.h"
 #include "ConfigManager/GlobalConfigManager.h"
-#include "platform/CCFileUtils.h"
+#include "platform/FileUtils.h"
 #include "Platform.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 #define GLOBAL_PREFERENCE
 
 const char * const FileName_NaviBar = "ui/NaviBar.csb";

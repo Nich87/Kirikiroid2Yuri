@@ -139,7 +139,7 @@ public:
 	virtual iPreferenceItem *createItem(int idx) override {
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 		iPreferenceItem *ret = CreatePreferenceItem<tPreferenceItemSubDir>(idx, PrefListSize, locmgr->GetText(Caption));
-		ret->addClickEventListener([](Ref*) {
+		ret->addClickEventListener([](ax::Object*) {
 			TVPMainScene::GetInstance()->pushUIForm(TVPGlobalPreferenceForm::create(GetSubPreferenceInfo()));
 		});
 		return ret;
@@ -158,7 +158,7 @@ public:
 	virtual iPreferenceItem *createItem(int idx) override {
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 		iPreferenceItem *ret = CreatePreferenceItem<tPreferenceItemSubDir>(idx, PrefListSize, locmgr->GetText(Caption));
-		ret->addClickEventListener([this](Ref*){
+		ret->addClickEventListener([this](ax::Object*){
 			TVPMainScene::GetInstance()->pushUIForm(TVPGlobalPreferenceForm::create(&Preference));
 		});
 		return ret;
@@ -211,7 +211,7 @@ public:
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 		tPreferenceItemConstant* ret = CreatePreferenceItem<tPreferenceItemConstant>(idx, PrefListSize, locmgr->GetText(Caption));
 		ret->setTouchEnabled(true);
-		ret->addClickEventListener([](Ref*) {
+		ret->addClickEventListener([](ax::Object*) {
 			TVPFetchSDCardPermission();
 		});
 		return ret;
@@ -225,7 +225,7 @@ public:
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 		tPreferenceItemConstant* ret = CreatePreferenceItem<tPreferenceItemConstant>(idx, PrefListSize, locmgr->GetText(Caption));
 		ret->setTouchEnabled(true);
-		ret->addClickEventListener([](Ref*) {
+		ret->addClickEventListener([](ax::Object*) {
 			LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 			if (TVPShowSimpleMessageBoxYesNo(locmgr->GetText("preference_ensure_reset_skin"), locmgr->GetText("notice")) == 0) {
 				PreferenceSetValueString("skin_path", "");
@@ -241,7 +241,7 @@ public:
 	virtual iPreferenceItem *createItem(int idx) override {
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
 		iPreferenceItem *ret = CreatePreferenceItem<tPreferenceItemSubDir>(idx, PrefListSize, locmgr->GetText(Caption));
-		ret->addClickEventListener([this](Ref*) {
+		ret->addClickEventListener([this](ax::Object*) {
 			TVPMainScene::GetInstance()->pushUIForm(KeyMapPreferenceForm::create(GetConfigManager()));
 		});
 		return ret;
@@ -267,7 +267,7 @@ static void initAllConfig() {
 		new tTVPPreferenceInfoRendererSubPref("preference_renderer_opt"),
 		new tTVPPreferenceInfoSelectFile("preference_default_font", "default_font", ""),
 		new tTVPPreferenceInfoCheckBox("preference_force_def_font", "force_default_font", false),
-#ifdef CC_TARGET_OS_IPHONE
+#if AX_TARGET_PLATFORM == AX_PLATFORM_IOS
 		new tTVPPreferenceInfoSelectList("preference_mem_limit", "memusage", "high", {
 #else
 		new tTVPPreferenceInfoSelectList("preference_mem_limit", "memusage", "unlimited", {
@@ -283,7 +283,7 @@ static void initAllConfig() {
 			new tTVPPreferenceInfoKeyMap("preference_keymap"),
 #ifdef GLOBAL_PREFERENCE
 			new tTVPPreferenceInfoCheckBox("preference_remember_last_path", "remember_last_path", true),
-#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
+#if AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
 			new tTVPPreferenceInfoCheckBox("preference_hide_android_sys_btn", "hide_android_sys_btn", false),
 			// new tTVPPreferenceInfoFetchSDCardPermission("preference_android_fetch_sdcard_permission"),
 #endif
@@ -321,7 +321,7 @@ static void initAllConfig() {
 	OpenglOptPreference.Preferences = {
 		new tTVPPreferenceInfoSubPref("preference_opengl_extension_opt", {
 			new tTVPPreferenceInfoConstant("preference_opengl_extension_desc"),
-#ifdef CC_TARGET_OS_IPHONE
+#if AX_TARGET_PLATFORM == AX_PLATFORM_IOS
 			new tTVPPreferenceInfoCheckBox("GL_EXT_shader_framebuffer_fetch", "GL_EXT_shader_framebuffer_fetch", true),
 #else
 			new tTVPPreferenceInfoCheckBox("GL_EXT_shader_framebuffer_fetch", "GL_EXT_shader_framebuffer_fetch", false),

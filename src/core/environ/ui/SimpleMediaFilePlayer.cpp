@@ -2,19 +2,19 @@
 #ifdef PixelFormat // libavcodec vs cocos2d
 #undef PixelFormat
 #endif
-#include "cocos2d.h"
+#include "axmol.h"
 #include "StorageIntf.h"
 #include "SysInitIntf.h"
 #include "ui/UIButton.h"
 #include "ui/UIText.h"
 #include "ui/UISlider.h"
-#include "cocos2d/MainScene.h"
-#include "cocos/ui/UIHelper.h"
+#include "MainScene.h"
+#include "ui/UIHelper.h"
 #include "movie/ffmpeg/KRMoviePlayer.h"
 #include "StorageImpl.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 void TVPControlAdDialog(int adType, int arg1, int arg2);
 
 class SimplePlayerOverlay {
@@ -38,12 +38,12 @@ public:
 	void SetCallback(const std::function<void(KRMovieEvent, void*)>& func) {
 		_overlay->GetPlayer()->SetCallback(func);
 	}
-	cocos2d::Node *GetRootNode() { return _overlay->GetRootNode(); }
-	void InitRootNode(cocos2d::Node *parent) {
-		cocos2d::Node *rootNode = cocos2d::Node::create();
+	ax::Node *GetRootNode() { return _overlay->GetRootNode(); }
+	void InitRootNode(ax::Node *parent) {
+		ax::Node *rootNode = ax::Node::create();
 		_overlay->SetRootNode(rootNode);
 		parent->addChild(rootNode);
-		rootNode->setContentSize(cocos2d::Size::ZERO);
+		rootNode->setContentSize(ax::Size::ZERO);
 		_overlay->SetVisible(true);
 	}
 	KRMovie::VideoPresentOverlay2 &GetOverlay() { return *_overlay; }
@@ -198,7 +198,7 @@ void SimpleMediaFilePlayer::bindBodyController(const NodeMap &allNodes)
 
 	Widget *overlay = allNodes.findWidget("Overlay");
 	_player->InitRootNode(overlay);
-	overlay->addClickEventListener([this](Ref*) {
+	overlay->addClickEventListener([this](ax::Object*) {
 		if (!NaviBar->isVisible()) {
 			NaviBar->setVisible(true);
 			NaviBar->setOpacity(0);
@@ -218,11 +218,11 @@ void SimpleMediaFilePlayer::bindFooterController(const NodeMap &allNodes)
 	ControlBar = allNodes.findController("ControlBar");
 
 	PlayBtn = allNodes.findWidget("PlayBtn");
-	PlayBtn->addClickEventListener([this](Ref*){
+	PlayBtn->addClickEventListener([this](ax::Object*){
 		TooglePlayOrPause();
 	});
-	PlayBtn->addTouchEventListener([this](Ref* _p, Widget::TouchEventType ev) {
-		cocos2d::ui::Widget *p = static_cast<Widget*>(_p);
+	PlayBtn->addTouchEventListener([this](ax::Object* _p, Widget::TouchEventType ev) {
+		ax::ui::Widget *p = static_cast<Widget*>(_p);
 		switch (ev) {
 		case Widget::TouchEventType::BEGAN:
 			setPlayButtonHighlight(true);
@@ -255,8 +255,8 @@ void SimpleMediaFilePlayer::bindFooterController(const NodeMap &allNodes)
 void SimpleMediaFilePlayer::bindHeaderController(const NodeMap &allNodes)
 {
 	NaviBar = allNodes.findController("NaviBar");
-	cocos2d::ui::Button *Back = static_cast<Button*>(allNodes.findController("Back"));
-	Back->addClickEventListener([this](Ref*) {
+	ax::ui::Button *Back = static_cast<Button*>(allNodes.findController("Back"));
+	Back->addClickEventListener([this](ax::Object*) {
 		removeFromParent();
 	});
 
@@ -265,7 +265,7 @@ void SimpleMediaFilePlayer::bindHeaderController(const NodeMap &allNodes)
 	RemainTime = static_cast<Text*>(allNodes.findController("RemainTime"));
 	Timeline = static_cast<Slider*>(allNodes.findController("Timeline"));
 
-	Timeline->addEventListener([this](Ref*, Slider::EventType ev) {
+	Timeline->addEventListener([this](ax::Object*, Slider::EventType ev) {
 		onSliderChanged();
 	});
 }

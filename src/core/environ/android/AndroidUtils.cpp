@@ -14,14 +14,14 @@
 #include <set>
 #include <sstream>
 #include "SysInitIntf.h"
-#include "platform/CCFileUtils.h"
+#include "platform/FileUtils.h"
 #include "ConfigManager/LocaleConfigManager.h"
 #include "Platform.h"
-#include "platform/CCCommon.h"
+#include "platform/Common.h"
 #include <EGL/egl.h>
 #include <queue>
-#include "base/CCDirector.h"
-#include "base/CCScheduler.h"
+#include "base/Director.h"
+#include "base/Scheduler.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <android/log.h>
@@ -31,9 +31,9 @@
 #include "EventIntf.h"
 #include "RenderManager.h"
 #include <sys/stat.h>
-#include "deprecated/CCString.h"
+// #include "deprecated/CCString.h" // removed in axmol, use std::string
 
-USING_NS_CC;
+using namespace ax;
 
 #define KR2ActJavaPath "org/tvp/kirikiri2/KR2Activity"
 //#define KR2EntryJavaPath "org/tvp/kirikiri2/Kirikiroid2"
@@ -296,7 +296,7 @@ static std::string File_getAbsolutePath(jobject FileObj) {
 	if (!methodInfo.env->CallBooleanMethod(FileObj, methodInfo.methodID)) return "";
 	if (!JniHelper::getMethodInfo(methodInfo, "java/io/File", "getAbsolutePath", "()Ljava/lang/String;")) return "";
 	jstring path = (jstring)methodInfo.env->CallObjectMethod(FileObj, methodInfo.methodID);
-	std::string ret = cocos2d::JniHelper::jstring2string(path);
+	std::string ret = ax::JniHelper::jstring2string(path);
 	return ret;
 }
 
@@ -362,7 +362,7 @@ std::vector<std::string> TVPGetDriverPath() {
 			int count = methodInfo.env->GetArrayLength(PathObjs);
 			for (int i = 0; i < count; ++i) {
 				jstring path = (jstring)methodInfo.env->GetObjectArrayElement(PathObjs, i);
-				if (path) ret.emplace_back(cocos2d::JniHelper::jstring2string(path));
+				if (path) ret.emplace_back(ax::JniHelper::jstring2string(path));
 			}
 		}
 	}
@@ -592,8 +592,8 @@ bool TVPCheckStartupArg() {
 	TVPCheckAndSendDumps(Android_GetDumpStoragePath(), GetPackageName(), TVPGetPackageVersionString());
 #if 0
 	// register event dispatcher
-	cocos2d::Director *director = cocos2d::Director::getInstance();
-	class HackForScheduler : public cocos2d::Scheduler {
+	ax::Director *director = ax::Director::getInstance();
+	class HackForScheduler : public ax::Scheduler {
 	public:
 		void regProcessEvents() {
 			schedulePerFrame(_processEvents, &_lastQueuedEvents, -1, false);
@@ -606,7 +606,7 @@ bool TVPCheckStartupArg() {
 
 
 void Android_PushEvents(const std::function<void()> &func) {
-	cocos2d::Director::getInstance()->getScheduler()->performFunctionInCocosThread(func);
+	ax::Director::getInstance()->getScheduler()->performFunctionInCocosThread(func);
 }
 
 void TVPControlAdDialog(int adType, int arg1, int arg2) {
@@ -656,7 +656,9 @@ bool TVPCheckStartupPath(const std::string &path) {
 	int pos = path.find_last_of('/');
 	if (pos == path.npos) return false;
 	std::string parent = path.substr(0, pos);
-	std::string testPath = parent + cocos2d::StringUtils::format("/_check_save_%d.tmp", time(nullptr));
+	char tmpPath[256];
+	snprintf(tmpPath, sizeof(tmpPath), "/_check_save_%d.tmp", (int)time(nullptr));
+	std::string testPath = parent + tmpPath;
 	JniMethodInfo methodInfo;
 	bool success = false;
 	if (JniHelper::getStaticMethodInfo(methodInfo, "org/tvp/kirikiri2/KR2Activity", "isWritableNormal", "(Ljava/lang/String;)Z")) {
@@ -734,7 +736,7 @@ bool TVPCreateFolders(const ttstr &folder)
 static bool TVPWriteDataToFileJava(const std::string &filename, const void* data, unsigned int size) {
 	JniMethodInfo methodInfo;
 	if (JniHelper::getStaticMethodInfo(methodInfo, "org/tvp/kirikiri2/KR2Activity", "WriteFile", "(Ljava/lang/String;[B)Z")) {
-		cocos2d::FileUtils *fileutil = cocos2d::FileUtils::getInstance();
+		ax::FileUtils *fileutil = ax::FileUtils::getInstance();
 		bool ret = false;
 		int retry = 3;
 		do {
@@ -753,7 +755,7 @@ static bool TVPWriteDataToFileJava(const std::string &filename, const void* data
 
 bool TVPWriteDataToFile(const ttstr &filepath, const void *data, unsigned int size) {
 	std::string filename = filepath.AsStdString();
-	cocos2d::FileUtils *fileutil = cocos2d::FileUtils::getInstance();
+	ax::FileUtils *fileutil = ax::FileUtils::getInstance();
 	while (fileutil->isFileExist(filename)) {
 		// for number filename suffix issue
 		time_t t = time(nullptr);
@@ -880,9 +882,9 @@ bool TVP_stat(const char *name, tTVP_stat &s) {
 	bool ret = !stat(name, &t);
 	s.st_mode = t.st_mode;
 	s.st_size = t.st_size;
-	s.st_atime = t.st_atim.tv_sec;
-	s.st_mtime = t.st_mtim.tv_sec;
-	s.st_ctime = t.st_ctim.tv_sec;
+	s.st_atime_ = t.st_atim.tv_sec;
+	s.st_mtime_ = t.st_mtim.tv_sec;
+	s.st_ctime_ = t.st_ctim.tv_sec;
 	return ret;
 }
 

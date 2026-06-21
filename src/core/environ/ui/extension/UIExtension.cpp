@@ -3,10 +3,10 @@
 #include "ui/UIWidget.h"
 #include "cocostudio/ActionTimeline/CSLoader.h"
 #include "cocostudio/WidgetReader/NodeReader/NodeReader.h"
-#include "base/CCEventDispatcher.h"
+#include "base/EventDispatcher.h"
 
-USING_NS_CC;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 #define XKPAGEVIEW_TAG 10086
 
@@ -16,7 +16,7 @@ XKPageView *XKPageView::create(Size size, XKPageViewDelegate *delegate)
 	if (page && page -> init(size, delegate)) {
 		page ->autorelease();
 	}else {
-		CC_SAFE_RELEASE(page);
+		AX_SAFE_RELEASE(page);
 	}
 	return  page;
 }
@@ -26,12 +26,12 @@ bool XKPageView::init(Size size, XKPageViewDelegate *delegate)
 	if (!ScrollView::initWithViewSize(size)) {
 		return false;
 	}
-	//±ØÐëÓÐdelegate£¬·ñÔò¶Ïµô  
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½delegateï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½  
 	//CCASSERT(delegate, "delegate should not be NULL!");
 	setClippingToBounds(false);
 	setDelegate(delegate);
 	if (_delegate) {
-		//»ñÈ¡pageµÄ´óÐ¡  
+		//ï¿½ï¿½È¡pageï¿½Ä´ï¿½Ð¡  
 		pageSize  = _delegate ->sizeForPerPage();
 	}
 	//init Data  
@@ -94,14 +94,14 @@ void XKPageView::setContentOffset(Vec2 offset)
 void XKPageView::setContentOffsetInDuration(Vec2 offset, float dt)
 {
 	ScrollView::setContentOffsetInDuration(offset, dt);
-	this->schedule(CC_SCHEDULE_SELECTOR(XKPageView::performedAnimatedScroll));
+	this->schedule(AX_SCHEDULE_SELECTOR(XKPageView::performedAnimatedScroll));
 }
 
 void XKPageView::performedAnimatedScroll(float dt)
 {
 	if (_dragging)
 	{
-		this->unschedule(CC_SCHEDULE_SELECTOR(XKPageView::performedAnimatedScroll));
+		this->unschedule(AX_SCHEDULE_SELECTOR(XKPageView::performedAnimatedScroll));
 		return;
 	}
 
@@ -141,10 +141,10 @@ void XKPageView::setTouchEnabled(bool enabled) {
 	if (enabled)
 	{
 		_touchListener = EventListenerTouchOneByOne::create();
-		_touchListener->onTouchBegan = CC_CALLBACK_2(XKPageView::onTouchBegan, this);
-		_touchListener->onTouchMoved = CC_CALLBACK_2(XKPageView::onTouchMoved, this);
-		_touchListener->onTouchEnded = CC_CALLBACK_2(XKPageView::onTouchEnded, this);
-		_touchListener->onTouchCancelled = CC_CALLBACK_2(ScrollView::onTouchCancelled, this);
+		_touchListener->onTouchBegan = AX_CALLBACK_2(XKPageView::onTouchBegan, this);
+		_touchListener->onTouchMoved = AX_CALLBACK_2(XKPageView::onTouchMoved, this);
+		_touchListener->onTouchEnded = AX_CALLBACK_2(XKPageView::onTouchEnded, this);
+		_touchListener->onTouchCancelled = AX_CALLBACK_2(ScrollView::onTouchCancelled, this);
 
 		_eventDispatcher->addEventListenerWithSceneGraphPriority(_touchListener, this);
 	} else
@@ -230,7 +230,7 @@ void XKPageView::setCurPageIndex(ssize_t idx) {
 
 class WidgetNodeReader : public cocostudio::NodeReader {
 public:
-	virtual cocos2d::Node* createNodeWithFlatBuffers(const flatbuffers::Table* nodeOptions)
+	virtual ax::Node* createNodeWithFlatBuffers(const flatbuffers::Table* nodeOptions)
 	{
 		Widget* node = Widget::create();
 
@@ -242,12 +242,12 @@ public:
 		static WidgetNodeReader *instance = new WidgetNodeReader;
 		return instance;
 	}
-	static cocos2d::Ref *createInstance() {
+	static ax::Object *createInstance() {
 		return getInstance();
 	}
 };
 
 void TVPInitUIExtension() {
 	CSLoader::getInstance();
-	static cocos2d::ObjectFactory::TInfo __Type("NodeReader", WidgetNodeReader::createInstance);
+	static ax::ObjectFactory::TInfo __Type("NodeReader", WidgetNodeReader::createInstance);
 }

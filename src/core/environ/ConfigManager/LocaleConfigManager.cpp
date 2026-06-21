@@ -1,5 +1,5 @@
 #include "LocaleConfigManager.h"
-#include "platform/CCFileUtils.h"
+#include "platform/FileUtils.h"
 #include "GlobalConfigManager.h"
 #include "tinyxml2/tinyxml2.h"
 #include "ui/UIText.h"
@@ -12,14 +12,14 @@ LocaleConfigManager::LocaleConfigManager() {
 std::string LocaleConfigManager::GetFilePath() {
 	std::string pathprefix = "locale/"; // constant file in app package
 	std::string fullpath = pathprefix + currentLangCode + ".xml"; // exp. "locale/en_us.xml"
-	if (!cocos2d::FileUtils::getInstance()->isFileExist(fullpath)) {
+	if (!ax::FileUtils::getInstance()->isFileExist(fullpath)) {
 		if (currentLangCode != "en_us") {
 			currentLangCode = "en_us"; // restore to default language config (must exist)
 			return GetFilePath();
 		}
 		// default locale also missing; do not recurse to avoid stack overflow.
 	}
-	return cocos2d::FileUtils::getInstance()->fullPathForFilename(fullpath);
+	return ax::FileUtils::getInstance()->fullPathForFilename(fullpath);
 }
 
 LocaleConfigManager* LocaleConfigManager::GetInstance() {
@@ -42,7 +42,7 @@ void LocaleConfigManager::Initialize(const std::string &sysLang) {
 	if (currentLangCode.empty()) currentLangCode = sysLang;
 	AllConfig.clear();
 	tinyxml2::XMLDocument doc;
-	std::string xmlData = cocos2d::FileUtils::getInstance()->getStringFromFile(GetFilePath());
+	std::string xmlData = ax::FileUtils::getInstance()->getStringFromFile(GetFilePath());
 	bool _writeBOM = false;
 	const char* p = xmlData.c_str();
 	p = tinyxml2::XMLUtil::ReadBOM(p, &_writeBOM);
@@ -59,24 +59,24 @@ void LocaleConfigManager::Initialize(const std::string &sysLang) {
 	}
 }
 
-bool LocaleConfigManager::initText(cocos2d::ui::Text *ctrl) {
+bool LocaleConfigManager::initText(ax::ui::Text *ctrl) {
 	if (!ctrl) return false;
-	return initText(ctrl, ctrl->getString());
+	return initText(ctrl, std::string(ctrl->getString()));
 }
 
-bool LocaleConfigManager::initText(cocos2d::ui::Button *ctrl)
+bool LocaleConfigManager::initText(ax::ui::Button *ctrl)
 {
 	if (!ctrl) return false;
-	return initText(ctrl, ctrl->getTitleText());
+	return initText(ctrl, std::string(ctrl->getTitleText()));
 }
 
-bool LocaleConfigManager::initText(cocos2d::ui::Text *ctrl, const std::string &tid) {
+bool LocaleConfigManager::initText(ax::ui::Text *ctrl, const std::string &tid) {
 	if (!ctrl) return false;
 
 	std::string txt = GetText(tid);
 	if (txt.empty()) {
 		ctrl->setString(tid);
-		ctrl->setColor(cocos2d::Color3B::RED);
+		ctrl->setColor(ax::Color3B::RED);
 		return false;
 	}
 
@@ -84,13 +84,13 @@ bool LocaleConfigManager::initText(cocos2d::ui::Text *ctrl, const std::string &t
 	return true;
 }
 
-bool LocaleConfigManager::initText(cocos2d::ui::Button *ctrl, const std::string &tid) {
+bool LocaleConfigManager::initText(ax::ui::Button *ctrl, const std::string &tid) {
 	if (!ctrl) return false;
 
 	std::string txt = GetText(tid);
 	if (txt.empty()) {
 		ctrl->setTitleText(tid);
-		ctrl->setTitleColor(cocos2d::Color3B::RED);
+		ctrl->setTitleColor(ax::Color3B::RED);
 		return false;
 	}
 

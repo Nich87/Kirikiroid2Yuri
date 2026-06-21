@@ -2,7 +2,7 @@
 extern "C" {
 #include "libswscale/swscale.h"
 }
-#include "cocos2d.h"
+#include "axmol.h"
 #include "KRMoviePlayer.h"
 #include "VideoCodec.h"
 #include "CodecUtils.h"
@@ -10,7 +10,7 @@ extern "C" {
 #include "WaveMixer.h"
 #include "WindowImpl.h"
 #include "VideoOvlImpl.h"
-#include "cocos2d/YUVSprite.h"
+#include "YUVSprite.h"
 
 extern std::thread::id TVPMainThreadID;
 
@@ -297,10 +297,10 @@ void VideoPresentOverlay::PresentPicture(float dt)
 	}
 	if (!m_pSprite) {
 		m_pSprite = TVPYUVSprite::create();
-		m_pSprite->setAnchorPoint(cocos2d::Vec2(0, 1));
+		m_pSprite->setAnchorPoint(ax::Vec2(0, 1));
 		m_pRootNode->addChild(m_pSprite);
 	}
-	cocos2d::Size videoSize(pic.width, pic.height);
+	ax::Size videoSize(pic.width, pic.height);
 	m_pSprite->updateTextureData(
 		pic.data[0], pic.width, pic.height,
 		pic.data[1], pic.width / 2, pic.height / 2,
@@ -313,7 +313,7 @@ void VideoPresentOverlay::PresentPicture(float dt)
 		m_pSprite->setScaleX(scaleX);
 	if (scaleY != m_pSprite->getScaleY())
 		m_pSprite->setScaleY(scaleY);
-	cocos2d::Vec2 pos = m_pSprite->getPosition();
+	ax::Vec2 pos = m_pSprite->getPosition();
 	int top = m_pRootNode->getParent()->getContentSize().height - rc.top;
 	if ((int)pos.x != rc.left || (int)pos.y != top) {
 		m_pSprite->setPosition(rc.left, top);
@@ -342,9 +342,9 @@ void MoviePlayerOverlay::SetWindow(tTJSNI_Window* window)
 {
 	ClearNode();
 	m_pOwnerWindow = window;
-	cocos2d::Node *parent = m_pOwnerWindow->GetForm()->GetPrimaryArea();
-	parent->addChild((m_pRootNode = cocos2d::Node::create()));
-	m_pRootNode->setContentSize(cocos2d::Size::ZERO);
+	ax::Node *parent = m_pOwnerWindow->GetForm()->GetPrimaryArea();
+	parent->addChild((m_pRootNode = ax::Node::create()));
+	m_pRootNode->setContentSize(ax::Size::ZERO);
 	const static std::string sckey("update video");
 	m_pRootNode->schedule([this](float dt){
 		PresentPicture(dt);
@@ -395,7 +395,7 @@ void TVPMoviePlayer::BitmapPicture::Clear()
 		if (data[i]) TJSAlignedDealloc(data[i]), data[i] = nullptr;
 }
 
-void VideoPresentOverlay2::SetRootNode(cocos2d::Node *node)
+void VideoPresentOverlay2::SetRootNode(ax::Node *node)
 {
 	ClearNode();
 	m_pRootNode = node;

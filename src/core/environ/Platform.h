@@ -47,9 +47,9 @@ void TVPFetchSDCardPermission(); // for android only
 struct tTVP_stat {
 	uint16_t st_mode;
 	uint64_t st_size;
-	uint64_t st_atime;
-	uint64_t st_mtime;
-	uint64_t st_ctime;
+	uint64_t st_atime_;
+	uint64_t st_mtime_;
+	uint64_t st_ctime_;
 };
 
 bool TVP_stat(const tjs_char *name, tTVP_stat &s);

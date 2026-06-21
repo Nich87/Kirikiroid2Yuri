@@ -134,8 +134,13 @@ bool TVPCheckIsVideoFile(const char *uri) {
 	if (!pIOCtx) {
 		return false;
 	}
+#if LIBAVFORMAT_VERSION_MAJOR >= 60
+	const AVInputFormat *fmt = NULL;
+	av_probe_input_buffer2(pIOCtx, &fmt, uri, NULL, 0, 0);
+#else
 	AVInputFormat *fmt = NULL;
 	av_probe_input_buffer2(pIOCtx, &fmt, uri, NULL, 0, 0);
+#endif
 	bool ret = false;
 	if (fmt) {
 		AVFormatContext *ic = avformat_alloc_context();

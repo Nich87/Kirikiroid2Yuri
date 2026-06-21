@@ -6,6 +6,23 @@ extern "C" {
 #include <vector>
 #include <string>
 
+// FFmpeg compatibility: FF_PROFILE_UNKNOWN/FF_LEVEL_UNKNOWN were renamed to
+// AV_PROFILE_UNKNOWN/AV_LEVEL_UNKNOWN in FFmpeg 5.x+
+#ifndef AV_PROFILE_UNKNOWN
+#  ifdef FF_PROFILE_UNKNOWN
+#    define AV_PROFILE_UNKNOWN FF_PROFILE_UNKNOWN
+#  else
+#    define AV_PROFILE_UNKNOWN -99
+#  endif
+#endif
+#ifndef AV_LEVEL_UNKNOWN
+#  ifdef FF_LEVEL_UNKNOWN
+#    define AV_LEVEL_UNKNOWN FF_LEVEL_UNKNOWN
+#  else
+#    define AV_LEVEL_UNKNOWN -99
+#  endif
+#endif
+
 NS_KRMOVIE_BEGIN
 enum StreamType
 {
@@ -39,8 +56,8 @@ public:
 		demuxerId = -1;
 		codec = (AVCodecID)0; // AV_CODEC_ID_NONE
 		codec_fourcc = 0;
-		profile = FF_PROFILE_UNKNOWN;
-		level = FF_LEVEL_UNKNOWN;
+		profile = AV_PROFILE_UNKNOWN;
+		level = AV_LEVEL_UNKNOWN;
 		type = STREAM_NONE;
 		source = STREAM_SOURCE_NONE;
 		iDuration = 0;

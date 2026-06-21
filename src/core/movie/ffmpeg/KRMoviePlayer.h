@@ -3,11 +3,12 @@
 #include "VideoPlayer.h"
 #include "krmovie.h"
 #include "ComplexRect.h"
+#include <functional>
 struct SwsContext;
 class iTVPSoundBuffer;
 class TVPYUVSprite;
 
-namespace cocos2d {
+namespace ax {
 	class Sprite;
 	class Node;
 }
@@ -156,7 +157,7 @@ protected:
 class VideoPresentOverlay : public TVPMoviePlayer // cocos2d compatible video display overlay
 {
 protected:
-	cocos2d::Node *m_pRootNode = nullptr;
+	ax::Node *m_pRootNode = nullptr;
 	TVPYUVSprite *m_pSprite = nullptr;
 
 	~VideoPresentOverlay();
@@ -193,8 +194,8 @@ public:
 	virtual const tTVPRect &GetBounds() override { return m_funcGetBounds(); }
 	void SetFuncGetBounds(const std::function<const tTVPRect &()>& func) { m_funcGetBounds = func; }
 	BasePlayer *GetPlayer() { return m_pPlayer; }
-	void SetRootNode(cocos2d::Node *node);
-	cocos2d::Node *GetRootNode() { return m_pRootNode; }
+	void SetRootNode(ax::Node *node);
+	ax::Node *GetRootNode() { return m_pRootNode; }
 	static VideoPresentOverlay2 *create();
 };
 

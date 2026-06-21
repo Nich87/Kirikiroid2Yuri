@@ -1,27 +1,19 @@
 #pragma once
-#include "cocos2d.h"
+#include "axmol.h"
 
-class TVPYUVSprite : public cocos2d::Sprite {
-	cocos2d::Texture2D* _textureU = nullptr, *_textureV = nullptr;
-	cocos2d::Texture2D::PixelFormat _texfmtY = cocos2d::Texture2D::PixelFormat::NONE,
-		_texfmtU = cocos2d::Texture2D::PixelFormat::NONE,
-		_texfmtV = cocos2d::Texture2D::PixelFormat::NONE;
-	cocos2d::CustomCommand _drawCommand;
+class TVPYUVSprite : public ax::Sprite {
+	ax::Texture2D* _textureU = nullptr;
+	ax::Texture2D* _textureV = nullptr;
 
-	GLuint _buffersVAO;
-	GLuint _buffersVBO[2]; //0: vertex  1: indices
-
-	void setupVBOAndVAO();
-
-	void updateTextureDataInternal(cocos2d::Texture2D *pTex, const void* data, int width, int height,
-		cocos2d::Texture2D::PixelFormat pixfmt);
+	void updateTextureDataInternal(ax::Texture2D *pTex, const void* data, int width, int height,
+		ax::PixelFormat pixfmt);
 
 public:
 	virtual ~TVPYUVSprite();
 
 	static TVPYUVSprite* create();
 
-	bool init();
+	bool init() override;
 
 	void updateTextureData(const void* data, int width, int height);
 
@@ -29,11 +21,4 @@ public:
 		const void* Y, int YW, int YH,
 		const void* U, int UW, int UH,
 		const void* V, int VW, int VH);
-
-private:
-	cocos2d::Mat4 _mv;
-
-	void onDraw();
-
-	void draw(cocos2d::Renderer *renderer, const cocos2d::Mat4 &transform, uint32_t flags) override;
 };

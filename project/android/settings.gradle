@@ -9,6 +9,7 @@ pluginManagement {
         id 'com.android.library' version '8.9.1'
     }
 }
+System.setProperty("AX_ROOT", new File(settingsDir, "../../thirdparty/port/axmol").canonicalPath)
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -17,7 +18,7 @@ dependencyResolutionManagement {
     }
 }
 
-include ':cocos2dx'
-project(':cocos2dx').projectDir = new File(settingsDir, '../../thirdparty/port/cocos2d-x/cocos/platform/android/libcocos2dx')
+include ':libaxmol'
+project(':libaxmol').projectDir = new File(settingsDir, '../../thirdparty/port/axmol/core/platform/android/libaxmol')
 include ':krkr2yuri'
 project(':krkr2yuri').projectDir = new File(settingsDir, 'app')

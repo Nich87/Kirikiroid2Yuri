@@ -33,7 +33,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${PORTBUILD_PATH}/include
 )
 target_compile_options(${PROJECT_NAME} PUBLIC 
-    -fPIC -fexceptions -std=c++14 -fvisibility=hidden
+    -fPIC -fexceptions -fvisibility=hidden
+)
+target_compile_options(${PROJECT_NAME} PRIVATE 
+    -std=c++14
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC

@@ -1,4 +1,4 @@
-#include "cocos2d.h"
+#include "axmol.h"
 #include "tjsCommHead.h"
 
 #include "TVPScreen.h"
@@ -8,7 +8,7 @@ int tTVPScreen::GetWidth() {
 	return 2048;
 }
 int tTVPScreen::GetHeight() {
-	const cocos2d::Size &size = cocos2d::Director::getInstance()->getOpenGLView()->getFrameSize();
+	const ax::Size &size = ax::Director::getInstance()->getGLView()->getFrameSize();
 	int w = GetWidth();
 	int h = w * (size.height / size.width);
 	return w;

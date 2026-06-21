@@ -1,7 +1,7 @@
 #pragma once
-#include "cocos2d.h"
+#include "axmol.h"
 
-class TVPAppDelegate : public cocos2d::Application {
+class TVPAppDelegate : public ax::Application {
 
 	virtual void initGLContextAttrs();
 

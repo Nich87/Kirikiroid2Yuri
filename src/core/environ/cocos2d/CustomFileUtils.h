@@ -1,5 +1,5 @@
 #pragma once
-#include "cocos2d.h"
+#include "axmol.h"
 
 void TVPAddAutoSearchArchive(const std::string &path);
 class TVPSkinManager {

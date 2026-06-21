@@ -4,13 +4,13 @@
 #include "ui/UIButton.h"
 #include "ui/UIText.h"
 #include "ui/UITextField.h"
-#include "platform/CCDevice.h"
-#include "cocos2d/MainScene.h"
+#include "platform/Device.h"
+#include "MainScene.h"
 #include "ConfigManager/LocaleConfigManager.h"
-#include "cocos2d/CCKeyCodeConv.h"
+#include "CCKeyCodeConv.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 const char * const FileName_Body = "ui/SelectList.csb";
 const char * const FileName_Cell = "ui/SelectListItem.csb";
@@ -47,12 +47,12 @@ void TVPSelectListForm::bindBodyController(const NodeMap &allNodes) {
 	node->addChild(pageView);
 	pageView->setDirection(extension::ScrollView::Direction::VERTICAL);
 	ui::Button *btn = static_cast<ui::Button*>(allNodes.findController("ok"));
-	btn->addClickEventListener([this](Ref*){
+	btn->addClickEventListener([this](ax::Object*){
 		FuncOK(pageView->getCurPageIndex());
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveToBottom);
 	});
 	btn = static_cast<ui::Button*>(allNodes.findController("cancel"));
-	btn->addClickEventListener([this](Ref*){
+	btn->addClickEventListener([this](ax::Object*){
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveToBottom);
 	});
 }
@@ -81,7 +81,7 @@ void TVPSelectListForm::initWithInfo(const std::vector<std::string> &info, const
 		cell->setContentSize(size);
 		ui::Helper::doLayout(cell);
 		LocaleConfigManager::GetInstance()->initText(text, str);
-		//text->addChild(LayerColor::create(cocos2d::Color4B(255, 255, 0, 255), text->getContentSize().width, text->getContentSize().height));
+		//text->addChild(LayerColor::create(ax::Color4B(255, 255, 0, 255), text->getContentSize().width, text->getContentSize().height));
 		Layout *lay = Layout::create();
 		lay->setContentSize(size);
 		lay->addChild(cell);
@@ -108,12 +108,12 @@ void TVPTextPairInputForm::bindBodyController(const NodeMap &allNodes) {
 	input2 = static_cast<TextField*>(allNodes.findController("input2"));
 
 	ui::Button *btn = static_cast<ui::Button*>(allNodes.findController("ok"));
-	btn->addClickEventListener([this](Ref*){
-		FuncOK(input1->getString(), input2->getString());
+	btn->addClickEventListener([this](ax::Object*){
+		FuncOK(std::string(input1->getString()), std::string(input2->getString()));
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveToBottom);
 	});
 	btn = static_cast<ui::Button*>(allNodes.findController("cancel"));
-	btn->addClickEventListener([this](Ref*){
+	btn->addClickEventListener([this](ax::Object*){
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveToBottom);
 	});
 }
@@ -158,16 +158,16 @@ void TVPKeyPairSelectForm::initWithInfo()
 	}
 	inherit::initWithInfo(_keyinfo, "0");
 	_keylistener = EventListenerKeyboard::create();
-	_keylistener->onKeyPressed = CC_CALLBACK_2(TVPKeyPairSelectForm::onKeyPressed, this);
-	_keylistener->onKeyReleased = CC_CALLBACK_2(TVPKeyPairSelectForm::onKeyReleased, this);
+	_keylistener->onKeyPressed = AX_CALLBACK_2(TVPKeyPairSelectForm::onKeyPressed, this);
+	_keylistener->onKeyReleased = AX_CALLBACK_2(TVPKeyPairSelectForm::onKeyReleased, this);
 	_eventDispatcher->addEventListenerWithFixedPriority(_keylistener, 1);
 }
 
-void TVPKeyPairSelectForm::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event)
+void TVPKeyPairSelectForm::onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event)
 {
 }
 
-void TVPKeyPairSelectForm::onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event)
+void TVPKeyPairSelectForm::onKeyReleased(ax::EventKeyboard::KeyCode keyCode, ax::Event* event)
 {
 	unsigned int code = TVPConvertKeyCodeToVKCode(keyCode);
 	if (!code || code >= 0x200) return;

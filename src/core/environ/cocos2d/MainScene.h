@@ -1,16 +1,16 @@
 #pragma once
 
-#include "2d/CCScene.h"
+#include "2d/Scene.h"
 #include "ui/UIWidget.h"
-#include "base/CCIMEDelegate.h"
+#include "base/IMEDelegate.h"
 
-namespace cocos2d {
+namespace ax {
 	class Controller;
 }
 
 class TVPWindowLayer;
 class TVPGameMainMenu;
-class TVPMainScene : public cocos2d::Scene, public cocos2d::IMEDelegate
+class TVPMainScene : public ax::Scene, public ax::IMEDelegate
 {
 	TVPMainScene();
 	static TVPMainScene *create();
@@ -21,7 +21,7 @@ public:
 	static TVPMainScene* GetInstance();
 	static TVPMainScene* CreateInstance();
 
-	static void setMaskLayTouchBegain(const std::function<bool(cocos2d::Touch *, cocos2d::Event *)> &func);
+	static void setMaskLayTouchBegain(const std::function<bool(ax::Touch *, ax::Event *)> &func);
 
 	enum eEnterAni {
 		eEnterAniNone,
@@ -29,19 +29,19 @@ public:
 		eEnterFromBottom,
 	};
 
-	void pushUIForm(cocos2d::Node *node, eEnterAni ani = eEnterAniOverFromRight);
+	void pushUIForm(ax::Node *node, eEnterAni ani = eEnterAniOverFromRight);
 
 	enum eLeaveAni {
 		eLeaveAniNone,
 		eLeaveAniLeaveFromLeft,
 		eLeaveToBottom,
 	};
-	void popUIForm(cocos2d::Node *node, eLeaveAni ani = eLeaveAniLeaveFromLeft);
+	void popUIForm(ax::Node *node, eLeaveAni ani = eLeaveAniLeaveFromLeft);
 	void popAllUIForm();
 
 	void addLayer(TVPWindowLayer* lay);
-	cocos2d::Size getUINodeSize();
-	cocos2d::Size getGameNodeSize() { return GameNode->getContentSize(); }
+	ax::Size getUINodeSize();
+	ax::Size getGameNodeSize() { return GameNode->getContentSize(); }
 	void rotateUI();
 
 	bool startupFrom(const std::string &path);
@@ -63,18 +63,18 @@ public:
 	static float convertCursorScale(float cfgScale/*0 ~ 1*/);
 
 private:
-	void onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
-	void onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
+	void onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event);
+	void onKeyReleased(ax::EventKeyboard::KeyCode keyCode, ax::Event* event);
 
-	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
-	void onTouchMoved(cocos2d::Touch *touch, cocos2d::Event *event);
-	void onTouchEnded(cocos2d::Touch *touch, cocos2d::Event *event);
-	void onTouchCancelled(cocos2d::Touch *touch, cocos2d::Event *event);
+	bool onTouchBegan(ax::Touch *touch, ax::Event *event);
+	void onTouchMoved(ax::Touch *touch, ax::Event *event);
+	void onTouchEnded(ax::Touch *touch, ax::Event *event);
+	void onTouchCancelled(ax::Touch *touch, ax::Event *event);
 
-	void onAxisEvent(cocos2d::Controller* ctrl, int code, cocos2d::Event *e);
-	void onPadKeyDown(cocos2d::Controller* ctrl, int code, cocos2d::Event *e);
-	void onPadKeyUp(cocos2d::Controller* ctrl, int code, cocos2d::Event *e);
-	void onPadKeyRepeat(cocos2d::Controller* ctrl, int code, cocos2d::Event *e);
+	void onAxisEvent(ax::Controller* ctrl, int code, ax::Event *e);
+	void onPadKeyDown(ax::Controller* ctrl, int code, ax::Event *e);
+	void onPadKeyUp(ax::Controller* ctrl, int code, ax::Event *e);
+	void onPadKeyRepeat(ax::Controller* ctrl, int code, ax::Event *e);
 
 	virtual bool canAttachWithIME() override;
 	virtual bool canDetachWithIME() override;
@@ -84,8 +84,8 @@ private:
 	void doStartup(float dt, std::string path);
 
 	float ScreenRatio;
-	cocos2d::Size SceneSize, UISize;
-	cocos2d::Node *UINode, *GameNode;
-	cocos2d::EventListenerTouchOneByOne* _touchListener;
+	ax::Size SceneSize, UISize;
+	ax::Node *UINode, *GameNode;
+	ax::EventListenerTouchOneByOne* _touchListener;
 	TVPGameMainMenu *_gameMenu;
 };

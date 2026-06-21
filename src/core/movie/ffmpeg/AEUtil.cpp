@@ -660,6 +660,12 @@ uint64_t CAEUtil::GetAVChannel(enum AEChannel aechannel)
 
 int CAEUtil::GetAVChannelIndex(enum AEChannel aechannel, uint64_t layout)
 {
+#if LIBAVUTIL_VERSION_MAJOR >= 59
+  AVChannelLayout ch_layout;
+  av_channel_layout_from_mask(&ch_layout, layout);
+  return av_channel_layout_index_from_channel(&ch_layout, (AVChannel)__builtin_ctzll(GetAVChannel(aechannel)));
+#else
   return av_get_channel_layout_channel_index(layout, GetAVChannel(aechannel));
+#endif
 }
 NS_KRMOVIE_END

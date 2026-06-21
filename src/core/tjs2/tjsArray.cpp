@@ -129,8 +129,16 @@ void tTJSStringAppender::Append(const tjs_char *string, tjs_int len)
 //---------------------------------------------------------------------------
 // tTJSArraySortCompare  : a class for comarison operator
 //---------------------------------------------------------------------------
+// C++17 removed std::binary_function; define our own base.
+template <typename Arg1, typename Arg2, typename Result>
+struct tjs_binary_function {
+    typedef Arg1 first_argument_type;
+    typedef Arg2 second_argument_type;
+    typedef Result result_type;
+};
+
 class tTJSArraySortCompare_NormalAscending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -139,7 +147,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_NormalDescending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -148,7 +156,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_NumericAscending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -164,7 +172,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_NumericDescending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -180,7 +188,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_StringAscending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -191,7 +199,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_StringDescending :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 public:
 	result_type operator () (first_argument_type lhs, second_argument_type rhs) const
@@ -202,7 +210,7 @@ public:
 	}
 };
 class tTJSArraySortCompare_Functional :
-	public std::binary_function<const tTJSVariant &, const tTJSVariant &, bool>
+	public tjs_binary_function<const tTJSVariant &, const tTJSVariant &, bool>
 {
 	tTJSVariantClosure Closure;
 public:

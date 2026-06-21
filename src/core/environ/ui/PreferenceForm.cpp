@@ -8,14 +8,14 @@
 #include "ConfigManager/LocaleConfigManager.h"
 #include "ConfigManager/GlobalConfigManager.h"
 #include "tinyxml2/tinyxml2.h"
-#include "cocos2d/MainScene.h"
-#include "2d/CCSprite.h"
+#include "MainScene.h"
+#include "2d/Sprite.h"
 #include "SeletListForm.h"
 #include "FileSelectorForm.h"
 #include "Platform.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 void TVPPreferenceForm::initPref(const tPreferenceScreen *config) {
 	Config = config;
@@ -35,7 +35,7 @@ void TVPPreferenceForm::initPref(const tPreferenceScreen *config) {
 void TVPPreferenceForm::bindBodyController(const NodeMap &allNodes) {
 	PrefList = static_cast<ListView*>(allNodes.findController("list"));
 	if (NaviBar.Left) {
-		NaviBar.Left->addClickEventListener([this](cocos2d::Ref*){
+		NaviBar.Left->addClickEventListener([this](ax::Object*){
 			TVPMainScene::GetInstance()->popUIForm(this);
 		});
 	}
@@ -88,12 +88,12 @@ tPreferenceItemCheckBox::tPreferenceItemCheckBox()
 void tPreferenceItemCheckBox::initController(const NodeMap &allNodes) {
 	checkbox = static_cast<CheckBox*>(allNodes.findController("checkbox"));
 	checkbox->setSelected(_getter());
-	checkbox->addEventListener([=](Ref*, CheckBox::EventType e) {
+	checkbox->addEventListener([=](ax::Object*, CheckBox::EventType e) {
 		this->_setter(e == CheckBox::EventType::SELECTED);
 	});
 	highlight = allNodes.findController("highlight");
 	setTouchEnabled(true);
-	addClickEventListener([this](Ref*){
+	addClickEventListener([this](ax::Object*){
 		static_cast<HackCheckBox*>(checkbox)->fireReleaseUpEvent();
 	});
 }
@@ -115,7 +115,7 @@ void tPreferenceItemConstant::initController(const NodeMap &allNodes) {
 	allNodes.findController("dir_icon")->setVisible(false);
 	Size origSize = _title->getContentSize();
 	_title->setTextAreaSize(Size::ZERO);
-	std::string s = _title->getString();
+	std::string s = std::string(_title->getString());
 	Size sizeTmp = _title->getVirtualRendererSize();
 	float addHeight = 0;
 	if (sizeTmp.width < origSize.width) { // single line
@@ -174,7 +174,7 @@ const char* tPreferenceItemSelectList::getUIFileName() const  {
 	return "ui/comctrl/SelectListItem.csb";
 }
 
-void tPreferenceItemSelectList::showForm(cocos2d::Ref*) {
+void tPreferenceItemSelectList::showForm(ax::Object*) {
 	std::vector<std::string> lst;
 	for (const std::pair<std::string, std::string>& item : CurInfo->getListInfo()) {
 		lst.emplace_back(item.first);
@@ -243,7 +243,7 @@ void tPreferenceItemKeyValPair::onPressStateChangedToPressed() {
 	if (highlight) highlight->setVisible(true);
 }
 
-void tPreferenceItemKeyValPair::showInput(cocos2d::Ref*) {
+void tPreferenceItemKeyValPair::showInput(ax::Object*) {
 	std::pair<std::string, std::string> val = _getter();
 	TVPTextPairInputForm *form = TVPTextPairInputForm::create(val.first, val.second,
 		[this](const std::string &t1, const std::string &t2){
@@ -273,7 +273,7 @@ TVPCustomPreferenceForm * TVPCustomPreferenceForm::create(const std::string &tid
 void TVPCustomPreferenceForm::bindBodyController(const NodeMap &allNodes) {
 	_listview = static_cast<ListView*>(allNodes.findController("list"));
 	if (NaviBar.Left) {
-		NaviBar.Left->addClickEventListener([this](cocos2d::Ref*){
+		NaviBar.Left->addClickEventListener([this](ax::Object*){
 			TVPMainScene::GetInstance()->popUIForm(this);
 		});
 	}
@@ -316,12 +316,12 @@ void iPreferenceItemSlider::initController(const NodeMap &allNodes) {
 	_reset = dynamic_cast<Button*>(allNodes.findController("reset"));
 	if (_reset) {
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
-		_reset->setTitleText(locmgr->GetText(_reset->getTitleText()));
+		_reset->setTitleText(locmgr->GetText(std::string(_reset->getTitleText())));
 	}
 
 	float val = _getter();
 	_slider->setPercent(val * 100.f);
-	_slider->addTouchEventListener([this](Ref* p, Widget::TouchEventType e) {
+	_slider->addTouchEventListener([this](ax::Object* p, Widget::TouchEventType e) {
 		Slider* slider = static_cast<Slider*>(p);
 		switch (e) {
 		case Widget::TouchEventType::ENDED:
@@ -338,7 +338,7 @@ Sprite *TVPCreateCUR();
 void tPreferenceItemCursorSlider::initController(const NodeMap &allNodes) {
 	inherit::initController(allNodes);
 	if (_reset) {
-		_reset->addClickEventListener([this](Ref*){
+		_reset->addClickEventListener([this](ax::Object*){
 			_slider->setPercent(_resetValue * 100.f);
 			_icon->setScale(_curScaleConv(_resetValue));
 			_setter(_resetValue);
@@ -348,7 +348,7 @@ void tPreferenceItemCursorSlider::initController(const NodeMap &allNodes) {
 	_cursor = TVPCreateCUR();
 	_icon->addChild(_cursor);
 	_icon->setScale(_curScaleConv(_slider->getPercent() / 100.f));
-	_slider->addEventListener([this](Ref* p, Slider::EventType e) {
+	_slider->addEventListener([this](ax::Object* p, Slider::EventType e) {
 		if (e == Slider::EventType::ON_PERCENTAGE_CHANGED) {
 			Slider* slider = static_cast<Slider*>(p);
 			_icon->setScale(_curScaleConv(slider->getPercent() / 100.f));
@@ -377,14 +377,14 @@ void tPreferenceItemTextSlider::initController(const NodeMap &allNodes) {
 	inherit::initController(allNodes);
 	_text = dynamic_cast<Text*>(allNodes.findController("text"));
 	if (_reset) {
-		_reset->addClickEventListener([this](Ref*){
+		_reset->addClickEventListener([this](ax::Object*){
 			_slider->setPercent(_resetValue * 100.f);
 			_text->setString(_strScaleConv(_resetValue));
 			_setter(_resetValue);
 		});
 	}
 	_text->setString(_strScaleConv(_slider->getPercent() / 100.f));
-	_slider->addEventListener([this](Ref* p, Slider::EventType e) {
+	_slider->addEventListener([this](ax::Object* p, Slider::EventType e) {
 		if (e == Slider::EventType::ON_PERCENTAGE_CHANGED) {
 			Slider* slider = static_cast<Slider*>(p);
 			_text->setString(_strScaleConv(slider->getPercent() / 100.f));
@@ -416,7 +416,7 @@ void tPreferenceItemFileSelect::onPressStateChangedToPressed()
 	if (highlight) highlight->setVisible(true);
 }
 
-void tPreferenceItemFileSelect::showForm(cocos2d::Ref*)
+void tPreferenceItemFileSelect::showForm(ax::Object*)
 {
 	std::string fullname = _getter();
 	std::string initname, initdir;
@@ -457,7 +457,7 @@ void KeyMapPreferenceForm::initData()
 #if 0
 	tPreferenceItemConstant* celladd = CreatePreferenceItem<tPreferenceItemConstant>(0, size, locmgr->GetText("preference_keymap_add"));
 	celladd->setTouchEnabled(true);
-	celladd->addClickEventListener([this](Ref*) {
+	celladd->addClickEventListener([this](ax::Object*) {
 		TVPKeyPairSelectForm *form = TVPKeyPairSelectForm::create([this](int k) {
 			TVPKeyPairSelectForm *form = TVPKeyPairSelectForm::create([this, k](int v) {
 				_mgr->SetKeyMap(k, v);
@@ -500,7 +500,7 @@ KeyMapPreferenceForm* KeyMapPreferenceForm::create(iSysConfigManager* mgr)
 void tPreferenceItemDeletable::initController(const NodeMap &allNodes)
 {
 	_deleteIcon = allNodes.findWidget("delete");
-	_scrollview = allNodes.findController<cocos2d::ui::ScrollView>("scrollview");
+	_scrollview = allNodes.findController<ax::ui::ScrollView>("scrollview");
 	_scrollview->setScrollBarEnabled(false);
 	Size viewSize = _scrollview->getContentSize();
 	float iconWidth = _deleteIcon->getContentSize().width;
@@ -508,7 +508,7 @@ void tPreferenceItemDeletable::initController(const NodeMap &allNodes)
 	_scrollview->setInnerContainerSize(viewSize);
 	walkTouchEvent(_scrollview);
 	_deleteIcon->addTouchEventListener(nullptr);
-	_deleteIcon->addClickEventListener([this](Ref*) {
+	_deleteIcon->addClickEventListener([this](ax::Object*) {
 		if (_onDelete) _onDelete(this);
 	});
 }
@@ -518,7 +518,7 @@ const char* tPreferenceItemDeletable::getUIFileName() const
 	return "ui/comctrl/DeletableItem.csb";
 }
 
-void tPreferenceItemDeletable::onTouchEvent(cocos2d::Ref* p, cocos2d::ui::Widget::TouchEventType ev)
+void tPreferenceItemDeletable::onTouchEvent(ax::Object* p, ax::ui::Widget::TouchEventType ev)
 {
 
 }
@@ -536,7 +536,7 @@ void tPreferenceItemDeletable::walkTouchEvent(Widget* node)
 	}
 }
 
-void tPreferenceItemKeyMap::initData(int k, int v, int idx, const cocos2d::Size &size)
+void tPreferenceItemKeyMap::initData(int k, int v, int idx, const ax::Size &size)
 {
 	_keypair.first = k; _keypair.second = v;
 	char buf[32];

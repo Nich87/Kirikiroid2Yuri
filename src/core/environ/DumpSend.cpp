@@ -1,7 +1,7 @@
 #include "network/HttpRequest.h"
 #include "network/HttpClient.h"
-#include "base/CCDirector.h"
-#include "base/CCScheduler.h"
+#include "base/Director.h"
+#include "base/Scheduler.h"
 #include "base/base64.h"
 #include "Platform.h"
 #include "SysInitIntf.h"
@@ -136,7 +136,7 @@ static void SendDumps(std::string dumpdir, std::vector<std::string> allDumps, st
 			zip_fileinfo zi;
 			memset(&zi, 0, sizeof zi);
 
-			time_t _t = stat_buf.st_mtime;
+			time_t _t = stat_buf.st_mtime_;
 			struct tm *time = localtime(&_t);
 			zi.tmz_date.tm_year = time->tm_year;
 			zi.tmz_date.tm_mon = time->tm_mon;
@@ -145,11 +145,11 @@ static void SendDumps(std::string dumpdir, std::vector<std::string> allDumps, st
 			zi.tmz_date.tm_min = time->tm_min;
 			zi.tmz_date.tm_sec = time->tm_sec;
 
-			// CRCÓ‹Ëã
+			// CRCÓ‹ï¿½ï¿½
 			unsigned long crcFile = 0;
 			crcFile = crc32(crcFile, (const Bytef *)&buf[0], buf.size());
-			// ¥Õ¥¡¥¤¥ë¤Î×·¼Ó
-			// UTF8¤Ç¸ñ¼{¤¹¤ë
+			// ï¿½Õ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×·ï¿½ï¿½
+			// UTF8ï¿½Ç¸ï¿½{ï¿½ï¿½ï¿½ï¿½
 			zipFile zf = zipOpen2_64((const void*)filename.c_str(), 0, NULL, GetZlibIOFunc());
 			if (zf == NULL) {
 				break;
@@ -167,7 +167,7 @@ static void SendDumps(std::string dumpdir, std::vector<std::string> allDumps, st
 			zipCloseFileInZip(zf);
 			zipClose(zf, NULL);
 
-			cocos2d::network::HttpRequest* pRequest = new cocos2d::network::HttpRequest();
+			ax::network::HttpRequest* pRequest = new ax::network::HttpRequest();
 			std::string strUrl = 
 #ifdef _DEBUG
 				"http://127.0.0.1:7777/upload_dump.php"
@@ -176,24 +176,29 @@ static void SendDumps(std::string dumpdir, std::vector<std::string> allDumps, st
 #endif
 				;
 			pRequest->setUrl(strUrl.c_str());
-			pRequest->setRequestType(cocos2d::network::HttpRequest::Type::POST);
+			pRequest->setRequestType(ax::network::HttpRequest::Type::POST);
 			std::ostringstream postData;
 			postData << "appid=" << url_encode(packageName);
 			postData << "&version=" << url_encode(versionStr);
 			postData << "&time=" << _t;
 			tTVPMemoryStream *bs = _inmemFiles.begin()->second;
 			char *base64str;
-			cocos2d::base64Encode((const unsigned char *)bs->GetInternalBuffer(), bs->GetSize(), &base64str);
+			{
+				size_t encLen = ax::base64::encoded_size(bs->GetSize());
+				base64str = (char*)malloc(encLen + 1);
+				ax::base64::encode(base64str, (void*)bs->GetInternalBuffer(), bs->GetSize());
+				base64str[encLen] = '\0';
+			}
 			postData << "&data=" << url_encode(base64str);
 			free(base64str);
 			std::string postStr = postData.str();
 			pRequest->setRequestData(postStr.c_str(), postStr.length());
-			pRequest->setResponseCallback([&](cocos2d::network::HttpClient* client, cocos2d::network::HttpResponse* response){
+			pRequest->setResponseCallback([&](ax::network::HttpClient* client, ax::network::HttpResponse* response){
 				_cond.notify_one();
 			});
 			pRequest->setTag("POST");
 			std::unique_lock<std::mutex> lk(_mutex);
-			cocos2d::network::HttpClient::getInstance()->send(pRequest);
+			ax::network::HttpClient::getInstance()->send(pRequest);
 			_cond.wait(lk);
 			pRequest->release();
 		} while (false);

@@ -1,10 +1,10 @@
 #include "TipsHelpForm.h"
 #include "ui/UIHelper.h"
 #include "ui/UIListView.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 TVPTipsHelpForm* TVPTipsHelpForm::create() {
 	TVPTipsHelpForm *ret = new TVPTipsHelpForm;
@@ -55,7 +55,7 @@ void TVPTipsHelpForm::rearrangeLayout() {
 void TVPTipsHelpForm::bindBodyController(const NodeMap &allNodes) {
 	_tipslist = dynamic_cast<ListView*>(allNodes.findController("tipslist"));
 	Widget *btn_close = allNodes.findWidget("btn_close");
-	btn_close->addClickEventListener([this](Ref* p){
+	btn_close->addClickEventListener([this](ax::Object* p){
 		static_cast<Widget*>(p)->setEnabled(false);
 		TVPMainScene::GetInstance()->popUIForm(this);
 	});

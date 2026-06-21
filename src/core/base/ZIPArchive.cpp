@@ -7,45 +7,10 @@
         #define NOUNCRYPT
 #endif
 
-#include "unzip/ioapi_mem.h"
-#include "unzip/unzip.h"
+#include "utils/minizip/ioapi.h"
+#include "utils/minizip/unzip.h"
 #undef ZEXPORT
 #define ZEXPORT
-
-//using namespace cocos2d;
-typedef cocos2d::ZPOS64_T ZPOS64_T;
-typedef cocos2d::zlib_filefunc64_32_def zlib_filefunc64_32_def;
-typedef cocos2d::unz_global_info64 unz_global_info64;
-typedef cocos2d::zlib_filefunc_def zlib_filefunc_def;
-typedef cocos2d::zlib_filefunc64_def zlib_filefunc64_def;
-typedef cocos2d::unz_global_info unz_global_info;
-typedef cocos2d::tm_unz tm_unz;
-typedef struct unz_file_info_s
-{
-	uLong version;              /* version made by                 2 bytes */
-	uLong version_needed;       /* version needed to extract       2 bytes */
-	uLong flag;                 /* general purpose bit flag        2 bytes */
-	uLong compression_method;   /* compression method              2 bytes */
-	uLong dosDate;              /* last mod file date in Dos fmt   4 bytes */
-	uLong crc;                  /* crc-32                          4 bytes */
-	uLong compressed_size;      /* compressed size                 4 bytes */
-	uLong uncompressed_size;    /* uncompressed size               4 bytes */
-	uLong size_filename;        /* filename length                 2 bytes */
-	uLong size_file_extra;      /* extra field length              2 bytes */
-	uLong size_file_comment;    /* file comment length             2 bytes */
-	ZPOS64_T offset_curfile;
-	uLong disk_num_start;       /* disk number start               2 bytes */
-	uLong internal_fa;          /* internal file attributes        2 bytes */
-	uLong external_fa;          /* external file attributes        4 bytes */
-
-	tm_unz tmu_date;
-} unz_file_info;
-typedef cocos2d::unz_file_pos unz_file_pos;
-typedef struct unz64_file_pos_s
-{
-	ZPOS64_T pos_in_zip_directory;   /* offset in zip file directory */
-	ZPOS64_T num_of_file;            /* # of file */
-} unz64_file_pos;
 
 #ifdef STDC
 #  include <stddef.h>
@@ -130,28 +95,7 @@ typedef struct
     int   raw;
 } file_in_zip64_read_info_s;
 
-/* unz_file_info contain information about a file in the zipfile */
-typedef struct unz_file_info64_s
-{
-    uLong version;              /* version made by                 2 bytes */
-    uLong version_needed;       /* version needed to extract       2 bytes */
-    uLong flag;                 /* general purpose bit flag        2 bytes */
-    uLong compression_method;   /* compression method              2 bytes */
-    uLong dosDate;              /* last mod file date in Dos fmt   4 bytes */
-    uLong crc;                  /* crc-32                          4 bytes */
-    ZPOS64_T compressed_size;   /* compressed size                 8 bytes */
-    ZPOS64_T uncompressed_size; /* uncompressed size               8 bytes */
-    uLong size_filename;        /* filename length                 2 bytes */
-    uLong size_file_extra;      /* extra field length              2 bytes */
-    uLong size_file_comment;    /* file comment length             2 bytes */
-    
-    ZPOS64_T offset_curfile;/* relative offset of local header 8 bytes */
-    uLong disk_num_start;       /* disk number start               2 bytes */
-    uLong internal_fa;          /* internal file attributes        2 bytes */
-    uLong external_fa;          /* external file attributes        4 bytes */
-    
-    tm_unz tmu_date;
-} unz_file_info64;
+
 
 /* unz64_s contain internal information about the zipfile
 */

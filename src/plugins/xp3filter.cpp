@@ -320,7 +320,7 @@ static XP3FilterDecoder* AddXP3Decoder() {
 }
 
 static std::map<std::thread::id, XP3FilterDecoder*> _thread_decoders;
-#if 1 || (defined(_MSC_VER) /*&& _MSC_VER <= 1800*/) || defined(CC_TARGET_OS_IPHONE)
+#if 1
 static std::mutex _decoders_mtx;
 static std::vector<XP3FilterDecoder*> _cached_decoders;
 static XP3FilterDecoder *FetchXP3Decoder() {

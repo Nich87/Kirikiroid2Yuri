@@ -1,7 +1,7 @@
 #pragma once
 #include "FileSelectorForm.h"
 
-namespace cocos2d {
+namespace ax {
 	class LayerColor;
 }
 
@@ -16,7 +16,7 @@ public:
 
 	void initFromFile();
 
-	virtual void onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
+	virtual void onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event);
 
 protected:
 	TVPMainFileSelectorForm();
@@ -29,9 +29,9 @@ protected:
 	void startup(const std::string &path);
 	void doStartup(const std::string &path);
 
-	void showMenu(cocos2d::Ref*);
+	void showMenu(ax::Object*);
 
-	void hideMenu(cocos2d::Ref*);
+	void hideMenu(ax::Object*);
 
 	bool isMenuShowed();
 	bool isMenuShrinked();
@@ -40,7 +40,7 @@ protected:
 
 	void ListHistory();
 
-	class HistoryCell : public cocos2d::ui::Widget {
+	class HistoryCell : public ax::ui::Widget {
 	public:
 		static HistoryCell *create(const std::string &fullpath, const std::string &prefix, const std::string &pathname,
 			const std::string &filename) {
@@ -61,20 +61,20 @@ protected:
 	private:
 		virtual void onSizeChanged() override;
 
-		cocos2d::ui::ScrollView *_scrollview;
-		cocos2d::ui::Widget *_btn_delete, *_btn_jump, *_btn_conf, *_btn_play;
-		cocos2d::ui::Text* _prefix, *_path, *_file;
-		cocos2d::Node *_panel_delete, *_root = nullptr;
+		ax::ui::ScrollView *_scrollview;
+		ax::ui::Widget *_btn_delete, *_btn_jump, *_btn_conf, *_btn_play;
+		ax::ui::Text* _prefix, *_path, *_file;
+		ax::Node *_panel_delete, *_root = nullptr;
 		std::string _fullpath;
 	};
 
-	void RemoveHistoryCell(cocos2d::Ref*, HistoryCell* cell);
+	void RemoveHistoryCell(ax::Object*, HistoryCell* cell);
 
 	std::string _lastpath;
-	cocos2d::ui::Widget *_touchHideMenu;
-	cocos2d::ui::ListView *_menuList, *_historyList = nullptr;
-	cocos2d::LayerColor* _mask;
-	cocos2d::Node *_menu, *_fileList = nullptr;
-	cocos2d::Node *newLocalPref, *localPref;
-	cocos2d::Size sizeNewLocalPref, sizeLocalPref;
+	ax::ui::Widget *_touchHideMenu;
+	ax::ui::ListView *_menuList, *_historyList = nullptr;
+	ax::LayerColor* _mask;
+	ax::Node *_menu, *_fileList = nullptr;
+	ax::Node *newLocalPref, *localPref;
+	ax::Size sizeNewLocalPref, sizeLocalPref;
 };

@@ -3,7 +3,7 @@
 
 class TVPTipsHelpForm : public iTVPBaseForm {
 	virtual void bindBodyController(const NodeMap &allNodes) override;
-	cocos2d::ui::ListView *_tipslist;
+	ax::ui::ListView *_tipslist;
 
 public:
 	static TVPTipsHelpForm* create();

@@ -1,5 +1,5 @@
 #include "InGameMenuForm.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "ui/UIButton.h"
 #include "ui/UIListView.h"
 #include "ui/UIText.h"
@@ -7,8 +7,8 @@
 #include "ui/UIHelper.h"
 #include "tjsGlobalStringMap.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 const char * const FileName_NaviBar = "ui/NaviBar.csb";
 const char * const FileName_Body = "ui/ListView.csb";
@@ -24,7 +24,7 @@ TVPInGameMenuForm * TVPInGameMenuForm::create(const std::string& title, tTJSNI_M
 void TVPInGameMenuForm::bindBodyController(const NodeMap &allNodes) {
 	_list = static_cast<ListView*>(allNodes.findController("list"));
 	if (NaviBar.Left) {
-		NaviBar.Left->addClickEventListener([this](cocos2d::Ref*){
+		NaviBar.Left->addClickEventListener([this](ax::Object*){
 			TVPMainScene::GetInstance()->popUIForm(this);
 		});
 	}
@@ -60,12 +60,12 @@ void TVPInGameMenuForm::initMenu(const std::string& title, tTJSNI_MenuItem *item
 	}
 }
 
-cocos2d::ui::Widget * TVPInGameMenuForm::createMenuItem(int idx, tTJSNI_MenuItem *item, const std::string &caption) {
+ax::ui::Widget * TVPInGameMenuForm::createMenuItem(int idx, tTJSNI_MenuItem *item, const std::string &caption) {
 	iPreferenceItem *ret = nullptr;
 	const Size &size = _list->getContentSize();
 	if (!item->GetChildren().empty()) {
 		ret = CreatePreferenceItem<tPreferenceItemSubDir>(idx, size, caption);
-		ret->addClickEventListener([=](Ref*){
+		ret->addClickEventListener([=](ax::Object*){
 			TVPMainScene::GetInstance()->pushUIForm(create(caption, item));
 		});
 	} else if (item->GetGroup() > 0 || item->GetRadio()) {
@@ -97,7 +97,7 @@ cocos2d::ui::Widget * TVPInGameMenuForm::createMenuItem(int idx, tTJSNI_MenuItem
 		return root;
 	} else {
 		ret = CreatePreferenceItem<tPreferenceItemConstant>(idx, size, caption);
-		ret->addClickEventListener([=](Ref*){
+		ret->addClickEventListener([=](ax::Object*){
 			TVPMainScene::GetInstance()->scheduleOnce(
 				std::bind(&TVPMainScene::popAllUIForm, TVPMainScene::GetInstance()), 0, "close_menu");
 			item->OnClick();

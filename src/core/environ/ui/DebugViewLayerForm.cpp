@@ -1,15 +1,15 @@
 #include "DebugViewLayerForm.h"
-#include "extensions/GUI/CCScrollView/CCTableView.h"
+#include "ui/UIListView.h" // axmol replacement for CCTableView
 #include "WindowIntf.h"
 #include "DrawDevice.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include <ui/UIButton.h>
-#include <2d/CCSprite.h>
-#include <2d/CCLabel.h>
+#include <2d/Sprite.h>
+#include <2d/Label.h>
 #include "RenderManager.h"
 
-USING_NS_CC;
-USING_NS_CC_EXT;
+using namespace ax;
+USING_NS_AX_EXT;
 
 class DebugViewLayerForm::DebugViewLayerCell : public TableViewCell {
 public:
@@ -123,10 +123,11 @@ bool DebugViewLayerForm::init() {
 
 	Texture2D* tex = new Texture2D();
 	tex->autorelease();
-	tex->initWithData(_2x2_block_Image, 16, Texture2D::PixelFormat::RGBA8888, 2, 2, Size::ZERO);
-	tex->setTexParameters(Texture2D::TexParams{
-		GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT
-	});
+	tex->initWithData(_2x2_block_Image, 16, ax::backend::PixelFormat::RGBA8, 2, 2);
+	tex->setTexParameters({ax::backend::SamplerFilter::NEAREST,
+	                       ax::backend::SamplerFilter::NEAREST,
+	                       ax::backend::SamplerAddressMode::REPEAT,
+	                       ax::backend::SamplerAddressMode::REPEAT});
 	Sprite *_backGround = Sprite::create();
 	_backGround->setTexture(tex);
 	_backGround->setScale(16);
@@ -153,7 +154,7 @@ bool DebugViewLayerForm::init() {
 
 	ui::Button *btnClose = ui::Button::create("img/Cancel_Normal.png", "img/Cancel_Press.png");
 	btnClose->setTouchEnabled(true);
-	btnClose->addClickEventListener([this](Ref*){
+	btnClose->addClickEventListener([this](ax::Object*){
 		removeFromParent();
 	});
 	btnClose->setPosition(getContentSize() - btnClose->getContentSize());
@@ -166,7 +167,7 @@ bool DebugViewLayerForm::init() {
 
 Size DebugViewLayerForm::tableCellSizeForIndex(TableView *table, ssize_t idx) {
 	iTVPTexture2D *tex = _layers[idx].Texture;
-	cocos2d::Size laySize(getContentSize().width, 0);
+	ax::Size laySize(getContentSize().width, 0);
 	if (tex) {
 		laySize.width = tex->GetWidth();
 		laySize.height = tex->GetHeight();
@@ -179,9 +180,9 @@ Size DebugViewLayerForm::tableCellSizeForIndex(TableView *table, ssize_t idx) {
 	return laySize;
 }
 
-cocos2d::extension::TableViewCell* DebugViewLayerForm::tableCellAtIndex(cocos2d::extension::TableView *table, ssize_t idx) {
+ax::extension::TableViewCell* DebugViewLayerForm::tableCellAtIndex(ax::extension::TableView *table, ssize_t idx) {
 	iTVPTexture2D *tex = _layers[idx].Texture;
-	cocos2d::Size laySize(getContentSize().width, 0);
+	ax::Size laySize(getContentSize().width, 0);
 	if (tex) {
 		laySize.height = tex->GetHeight();
 		float maxHeight = getContentSize().height / 2.5f;

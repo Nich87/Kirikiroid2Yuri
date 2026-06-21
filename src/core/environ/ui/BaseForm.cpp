@@ -1,27 +1,27 @@
 #include "BaseForm.h"
-#include "cocos2d.h"
+#include "axmol.h"
 #include "cocostudio/ActionTimeline/CSLoader.h"
 #include "Application.h"
 #include "ui/UIWidget.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "ui/UIHelper.h"
 #include "ui/UIText.h"
 #include "ui/UIButton.h"
 #include "ui/UIListView.h"
 #include "Platform.h"
-#include "cocostudio/ActionTimeline/CCActionTimeline.h"
-#include "extensions/GUI/CCScrollView/CCTableView.h"
+#include "cocostudio/ActionTimeline/ActionTimeline.h"
+#include "ui/UIListView.h" // axmol replacement for CCTableView
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 NodeMap::NodeMap() : FileName(nullptr) { }
-NodeMap::NodeMap(const char *filename, cocos2d::Node* node) : FileName(filename) {
+NodeMap::NodeMap(const char *filename, ax::Node* node) : FileName(filename) {
 	initFromNode(node);
 }
 
 template <>
-cocos2d::Node * NodeMap::findController<cocos2d::Node>(const std::string &name, bool notice) const {
+ax::Node * NodeMap::findController<ax::Node>(const std::string &name, bool notice) const {
 	auto it = this->find(name);
 	if (it != this->end())
 		return it->second;
@@ -35,10 +35,10 @@ cocos2d::Node * NodeMap::findController<cocos2d::Node>(const std::string &name, 
 	return nullptr;
 }
 
-void NodeMap::initFromNode(cocos2d::Node* node) {
+void NodeMap::initFromNode(ax::Node* node) {
 	const Vector<Node*>& childlist = node->getChildren();
 	for (auto it = childlist.begin(); it != childlist.end(); ++it) {
-		Node *child = *it; std::string name = child->getName();
+		Node *child = *it; std::string name = std::string(child->getName());
 		if (!name.empty()) (*this)[name] = child;
 		initFromNode(child);
 	}
@@ -56,9 +56,9 @@ void NodeMap::onLoadError(const std::string &name) const
 Node* CSBReader::Load(const char *filename) {
 	clear();
 	FileName = filename;
-	Node* ret = CSLoader::createNode(filename, [this](Ref* p){
+	Node* ret = CSLoader::createNode(filename, [this](ax::Object* p){
 		Node* node = static_cast<Node*>(p);
-		std::string name = node->getName();
+		std::string name = std::string(node->getName());
 		if (!name.empty()) operator[](name) = node;
 		int nAction = node->getNumberOfRunningActions();
 		if (nAction == 1) {
@@ -83,8 +83,8 @@ void iTVPBaseForm::Show() {
 
 }
 
-bool iTVPBaseForm::initFromFile(const char *navibar, const char *body, const char *bottombar, cocos2d::Node *parent) {
-	bool ret = cocos2d::Node::init();
+bool iTVPBaseForm::initFromFile(const char *navibar, const char *body, const char *bottombar, ax::Node *parent) {
+	bool ret = ax::Node::init();
 	//NaviBar.Title = nullptr;
 	NaviBar.Left = nullptr;
 	NaviBar.Right = nullptr;
@@ -164,8 +164,8 @@ void iTVPBaseForm::rearrangeLayout() {
 	}
 }
 
-void iTVPBaseForm::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-	if (keyCode == cocos2d::EventKeyboard::KeyCode::KEY_BACK) {
+void iTVPBaseForm::onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event) {
+	if (keyCode == ax::EventKeyboard::KeyCode::KEY_BACK) {
 		TVPMainScene::GetInstance()->popUIForm(this, TVPMainScene::eLeaveAniLeaveFromLeft);
 	}
 }
@@ -178,7 +178,7 @@ void iTVPBaseForm::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d
 // 		Widget *root = static_cast<Widget*>(reader.Load(it.first.c_str()));
 // 		Widget *btn = static_cast<Widget*>(reader.findController("button"));
 // 		std::function<void()> func = it.second;
-// 		if (btn) btn->addClickEventListener([=](cocos2d::Ref*){ func(); });
+// 		if (btn) btn->addClickEventListener([=](ax::Object*){ func(); });
 // 		BottomBar.Panel->pushBackCustomItem(root);
 // 	}
 // }
@@ -202,7 +202,7 @@ void iTVPFloatForm::rearrangeLayout()
 	}
 }
 
-void ReloadTableViewAndKeepPos(cocos2d::extension::TableView *pTableView)
+void ReloadTableViewAndKeepPos(ax::extension::TableView *pTableView)
 {
 	Vec2 off = pTableView->getContentOffset();
 	float origHeight = pTableView->getContentSize().height;

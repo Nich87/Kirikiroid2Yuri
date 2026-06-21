@@ -1,15 +1,15 @@
 #include "MainFileSelectorForm.h"
-#include "cocos2d.h"
+#include "axmol.h"
 #include "cocostudio/CocoLoader.h"
-#include "cocostudio/CCSSceneReader.h"
+// #include "cocostudio/CCSSceneReader.h" // removed in axmol
 #include "Application.h"
 #include "Platform.h"
-#include "cocostudio/ActionTimeline/CCActionTimeline.h"
+// #include "cocostudio/ActionTimeline/CCActionTimeline.h" // removed in axmol
 #include "ui/UIText.h"
 #include "ui/UIHelper.h"
 #include "ui/UIButton.h"
 #include "ui/UIListView.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "ConfigManager/LocaleConfigManager.h"
 #include "ConfigManager/IndividualConfigManager.h"
 #include "GlobalPreferenceForm.h"
@@ -20,10 +20,10 @@
 #include "StorageImpl.h"
 #include "TipsHelpForm.h"
 #include "XP3RepackForm.h"
-#include "cocos2d/CustomFileUtils.h"
+#include "CustomFileUtils.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 const float UI_ACTION_DUR = 0.3f;
 const char * const FileName_NaviBar = "ui/NaviBarWithMenu.csb";
@@ -285,7 +285,7 @@ void TVPMainFileSelectorForm::doStartup(const std::string &path) {
 std::string TVPGetOpenGLInfo();
 void TVPOpenPatchLibUrl();
 
-void TVPMainFileSelectorForm::showMenu(Ref*) {
+void TVPMainFileSelectorForm::showMenu(ax::Object*) {
 	if (!_menu) {
 		Size uiSize = getContentSize();
 		CSBReader reader;
@@ -297,7 +297,7 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 		_touchHideMenu = ui::Widget::create();
 		_touchHideMenu->setAnchorPoint(Vec2::ZERO);
 		_touchHideMenu->setContentSize(uiSize);
-		_touchHideMenu->addClickEventListener([this](Ref*) {
+		_touchHideMenu->addClickEventListener([this](ax::Object*) {
 			if (isMenuShowed())
 				hideMenu(nullptr);
 		});
@@ -336,27 +336,27 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 		localeMgr->initText(reader.findController<Text>("titleNewFolder"));
 
 		// button events
-		reader.findWidget("btnRotate")->addClickEventListener([](Ref*) {
+		reader.findWidget("btnRotate")->addClickEventListener([](ax::Object*) {
 			TVPMainScene::GetInstance()->pushUIForm(TVPGlobalPreferenceForm::create());
 		});
-		reader.findWidget("btnGlobalPref")->addClickEventListener([](Ref*) {
+		reader.findWidget("btnGlobalPref")->addClickEventListener([](ax::Object*) {
 			TVPMainScene::GetInstance()->pushUIForm(TVPGlobalPreferenceForm::create());
 		});
-		reader.findWidget("btnNewLocalPref")->addClickEventListener([this](Ref*) {
+		reader.findWidget("btnNewLocalPref")->addClickEventListener([this](ax::Object*) {
 			if (IndividualConfigManager::GetInstance()->CreatePreferenceAt(CurrentPath)) {
 				TVPMainScene::GetInstance()->pushUIForm(IndividualPreferenceForm::create());
 				hideMenu(nullptr);
 			}
 		});
-		reader.findWidget("btnLocalPref")->addClickEventListener([this](Ref*) {
+		reader.findWidget("btnLocalPref")->addClickEventListener([this](ax::Object*) {
 			onShowPreferenceConfigAt(CurrentPath);
 		});
-		reader.findWidget("btnHelp")->addClickEventListener([this](Ref*) {
+		reader.findWidget("btnHelp")->addClickEventListener([this](ax::Object*) {
 			TVPTipsHelpForm::show();
 		});
 		bool showSimpleAbout = false;
 		if(showSimpleAbout) {
-			reader.findWidget("btnAbout")->addClickEventListener([](Ref*) {
+			reader.findWidget("btnAbout")->addClickEventListener([](ax::Object*) {
 				std::string versionText = "Version ";
 				versionText += TVPGetPackageVersionString();
 
@@ -366,13 +366,13 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 				const char *caption = strCaption.c_str();
 				TVPShowSimpleMessageBox(versionText.c_str(), caption, 1, &pszBtnText);
 			});
-			reader.findWidget("btnExit")->addClickEventListener([](Ref*) {
+			reader.findWidget("btnExit")->addClickEventListener([](ax::Object*) {
 				if (TVPShowSimpleMessageBoxYesNo(
 					LocaleConfigManager::GetInstance()->GetText("sure_to_exit"),
 					"XP3Player") == 0) TVPExitApplication(0);
 			});
 		} else {
-			reader.findWidget("btnAbout")->addClickEventListener([](Ref*) {
+			reader.findWidget("btnAbout")->addClickEventListener([](ax::Object*) {
 				std::string versionText = "Version ";
 				versionText += TVPGetPackageVersionString();
 				versionText += "\n";
@@ -393,7 +393,7 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 					TVPOpenPatchLibUrl();
 					break;
 				case 2:
-					cocos2d::Director::getInstance()->getScheduler()->performFunctionInCocosThread([]{
+					ax::Director::getInstance()->getScheduler()->performFunctionInCocosThread([]{
 						std::string text = TVPGetOpenGLInfo();
 						const char *pOK = LocaleConfigManager::GetInstance()->GetText("ok").c_str();
 						TVPShowSimpleMessageBox(text.c_str(),
@@ -403,16 +403,16 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 					break;
 				}
 			});
-			reader.findWidget("btnExit")->addClickEventListener([](Ref*) {
+			reader.findWidget("btnExit")->addClickEventListener([](ax::Object*) {
 				_AskExit();
 			});
 		}
 		// ## fix repack can not compile
-		// reader.findWidget("btnRepack")->addClickEventListener([this](Ref*) {
+		// reader.findWidget("btnRepack")->addClickEventListener([this](ax::Object*) {
 		// 	TVPProcessXP3Repack(CurrentPath);
 		// 	hideMenu(nullptr);
 		// });
-		reader.findWidget("btnNewFolder")->addClickEventListener([this](Ref*) {
+		reader.findWidget("btnNewFolder")->addClickEventListener([this](ax::Object*) {
 			ttstr name = TJS_W("New Folder");
 			std::vector<ttstr> btns;
 			btns.emplace_back("OK");
@@ -457,7 +457,7 @@ void TVPMainFileSelectorForm::showMenu(Ref*) {
 	}
 }
 
-void TVPMainFileSelectorForm::hideMenu(cocos2d::Ref*)
+void TVPMainFileSelectorForm::hideMenu(ax::Object*)
 {
 	if (!_menu) return;
 	_mask->stopAllActions();
@@ -520,9 +520,9 @@ void TVPMainFileSelectorForm::ListHistory()
 			cell = HistoryCell::create(fullpath, split_path.first + "/", split_path.second, "/" + lastname);
 			Widget::ccWidgetClickCallback funcConf;
 			if (TVPCheckExistentLocalFile(path + "/Kirikiroid2Preference.xml"))
-				funcConf = [this, path](Ref*){ onShowPreferenceConfigAt(path); };
+				funcConf = [this, path](ax::Object*){ onShowPreferenceConfigAt(path); };
 			cell->initFunction(std::bind(&TVPMainFileSelectorForm::RemoveHistoryCell, this, std::placeholders::_1, cell),
-				[this, path](Ref*){ ListDir(path); }, funcConf, [this, fullpath](Ref*) { startup(fullpath); });
+				[this, path](ax::Object*){ ListDir(path); }, funcConf, [this, fullpath](ax::Object*) { startup(fullpath); });
 			Size cellsize = cell->getContentSize();
 			cellsize.width = _historyList->getContentSize().width;
 			cell->setContentSize(cellsize);
@@ -539,7 +539,7 @@ void TVPMainFileSelectorForm::ListHistory()
 	_historyList->pushBackCustomItem(nullcell);
 }
 
-void TVPMainFileSelectorForm::RemoveHistoryCell(cocos2d::Ref* btn, HistoryCell* cell)
+void TVPMainFileSelectorForm::RemoveHistoryCell(ax::Object* btn, HistoryCell* cell)
 {
 	static_cast<Widget*>(btn)->setEnabled(false);
 	cell->runAction(Sequence::createWithTwoActions(
@@ -554,8 +554,8 @@ void TVPMainFileSelectorForm::RemoveHistoryCell(cocos2d::Ref* btn, HistoryCell* 
 	_SaveHistory();
 }
 
-void TVPMainFileSelectorForm::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event) {
-	if (keyCode == cocos2d::EventKeyboard::KeyCode::KEY_BACK) {
+void TVPMainFileSelectorForm::onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event) {
+	if (keyCode == ax::EventKeyboard::KeyCode::KEY_BACK) {
 		if (isMenuShowed()) {
 			hideMenu(nullptr);
 		} else {
@@ -576,14 +576,14 @@ void TVPMainFileSelectorForm::HistoryCell::initInfo(const std::string &fullpath,
 
 	CSBReader reader;
 	_root = reader.Load("ui/RecentListItem.csb");
-	_scrollview = static_cast<cocos2d::ui::ScrollView*>(reader.findController("scrollview"));
-	_btn_delete = static_cast<cocos2d::ui::Widget*>(reader.findController("btn_delete"));
-	_btn_jump = static_cast<cocos2d::ui::Widget*>(reader.findController("btn_jump"));
-	_btn_conf = static_cast<cocos2d::ui::Widget*>(reader.findController("btn_conf"));
-	_btn_play = static_cast<cocos2d::ui::Widget*>(reader.findController("btn_play"));
-	_prefix = static_cast<cocos2d::ui::Text*>(reader.findController("prefix"));
-	_path = static_cast<cocos2d::ui::Text*>(reader.findController("path"));
-	_file = static_cast<cocos2d::ui::Text*>(reader.findController("file"));
+	_scrollview = static_cast<ax::ui::ScrollView*>(reader.findController("scrollview"));
+	_btn_delete = static_cast<ax::ui::Widget*>(reader.findController("btn_delete"));
+	_btn_jump = static_cast<ax::ui::Widget*>(reader.findController("btn_jump"));
+	_btn_conf = static_cast<ax::ui::Widget*>(reader.findController("btn_conf"));
+	_btn_play = static_cast<ax::ui::Widget*>(reader.findController("btn_play"));
+	_prefix = static_cast<ax::ui::Text*>(reader.findController("prefix"));
+	_path = static_cast<ax::ui::Text*>(reader.findController("path"));
+	_file = static_cast<ax::ui::Text*>(reader.findController("file"));
 	_panel_delete = reader.findController("panel_delete");
 	if (!_panel_delete) _panel_delete = _btn_delete;
 	_scrollview->setScrollBarEnabled(false);

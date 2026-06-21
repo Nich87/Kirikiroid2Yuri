@@ -3,14 +3,14 @@
 #include "tjsCommHead.h"
 #include "movie/ffmpeg/VideoPlayer.h"
 
-namespace cocos2d {
+namespace ax {
 	class Sprite;
 }
 
 class SimplePlayerOverlay;
 
 class SimpleMediaFilePlayer : public iTVPBaseForm {
-	typedef cocos2d::Node inherit;
+	typedef ax::Node inherit;
 
 public:
 	virtual ~SimpleMediaFilePlayer();
@@ -39,11 +39,11 @@ private:
 	bool _inupdate = false;
 
 	// ui controllers
-	cocos2d::ui::Text *Title, *PlayTime, *RemainTime, *OSDText;
-	cocos2d::ui::Slider *Timeline;
-	cocos2d::Node *NaviBar, *ControlBar, *OSD, *Overlay;
-	cocos2d::ui::Widget *PlayBtn;
-	cocos2d::Node *PlayBtnNormal, *PlayBtnPress, *PlayIconNormal, *PlayIconPress, *PauseIconNormal, *PauseIconPress;
+	ax::ui::Text *Title, *PlayTime, *RemainTime, *OSDText;
+	ax::ui::Slider *Timeline;
+	ax::Node *NaviBar, *ControlBar, *OSD, *Overlay;
+	ax::ui::Widget *PlayBtn;
+	ax::Node *PlayBtnNormal, *PlayBtnPress, *PlayIconNormal, *PlayIconPress, *PauseIconNormal, *PauseIconPress;
 	void setPlayButtonHighlight(bool highlight);
 	void refreshPlayButtonStatus();
 };

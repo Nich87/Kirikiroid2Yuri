@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 /*
-	Risa [‚è‚³]      alias ‹g—¢‹g—¢3 [kirikiri-3]
+	Risa [ï¿½è‚³]      alias ï¿½gï¿½ï¿½ï¿½gï¿½ï¿½3 [kirikiri-3]
 	 stands for "Risa Is a Stagecraft Architecture"
 	Copyright (C) 2000 W.Dee <dee@kikyou.info> and contributors
 
@@ -8,7 +8,7 @@
 */
 //---------------------------------------------------------------------------
 //! @file
-//! @brief FreeType ƒtƒHƒ“ƒgƒhƒ‰ƒCƒo
+//! @brief FreeType ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½hï¿½ï¿½ï¿½Cï¿½o
 //---------------------------------------------------------------------------
 #ifndef _FREETYPE_H_
 #define _FREETYPE_H_
@@ -22,38 +22,38 @@
 #pragma warning(push)
 #pragma warning(disable : 4819)
 #endif
-#include "freetype2/ft2build.h"
-#include "freetype2/freetype.h"
+#include "ft2build.h"
+#include "freetype/freetype.h"
 // #include FT_FREETYPE_H
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
 
 //---------------------------------------------------------------------------
-#define	TVP_GET_FACE_INDEX_FROM_OPTIONS(x) ((x) & 0xff) //!< ƒIƒvƒVƒ‡ƒ“®”‚©‚çFaceƒCƒ“ƒfƒbƒNƒX‚ðŽæ‚èo‚·ƒ}ƒNƒ
-#define	TVP_FACE_OPTIONS_FACE_INDEX(x)		((x) & 0xff) //!< FaceƒCƒ“ƒfƒbƒNƒX‚ðƒIƒvƒVƒ‡ƒ“®”‚É•ÏŠ·‚·‚éƒ}ƒNƒ
-#define	TVP_FACE_OPTIONS_FILE				0x00010000 //!< ƒtƒHƒ“ƒg–¼‚Å‚Í‚È‚­‚Äƒtƒ@ƒCƒ‹–¼‚É‚æ‚éƒtƒHƒ“ƒg‚ÌŽw’è‚ðs‚¤
-#define TVP_FACE_OPTIONS_NO_HINTING			0x00020000 //!< ƒqƒ“ƒeƒBƒ“ƒO‚ðs‚í‚È‚¢
-#define TVP_FACE_OPTIONS_FORCE_AUTO_HINTING	0x00020000 //!< ‹­§“I‚É auto hinting ‚ðs‚¤
-#define TVP_FACE_OPTIONS_NO_ANTIALIASING	0x00040000 //!< ƒAƒ“ƒ`ƒGƒCƒŠƒAƒX‚ðs‚í‚È‚¢
+#define	TVP_GET_FACE_INDEX_FROM_OPTIONS(x) ((x) & 0xff) //!< ï¿½Iï¿½vï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Faceï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½ï¿½}ï¿½Nï¿½ï¿½
+#define	TVP_FACE_OPTIONS_FACE_INDEX(x)		((x) & 0xff) //!< Faceï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½Iï¿½vï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É•ÏŠï¿½ï¿½ï¿½ï¿½ï¿½}ï¿½Nï¿½ï¿½
+#define	TVP_FACE_OPTIONS_FILE				0x00010000 //!< ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½ï¿½ï¿½Å‚Í‚È‚ï¿½ï¿½Äƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½É‚ï¿½ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½ÌŽwï¿½ï¿½ï¿½ï¿½sï¿½ï¿½
+#define TVP_FACE_OPTIONS_NO_HINTING			0x00020000 //!< ï¿½qï¿½ï¿½ï¿½eï¿½Bï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½sï¿½ï¿½È‚ï¿½
+#define TVP_FACE_OPTIONS_FORCE_AUTO_HINTING	0x00020000 //!< ï¿½ï¿½ï¿½ï¿½ï¿½Iï¿½ï¿½ auto hinting ï¿½ï¿½ï¿½sï¿½ï¿½
+#define TVP_FACE_OPTIONS_NO_ANTIALIASING	0x00040000 //!< ï¿½Aï¿½ï¿½ï¿½`ï¿½Gï¿½Cï¿½ï¿½ï¿½Aï¿½Xï¿½ï¿½ï¿½sï¿½ï¿½È‚ï¿½
 
 //---------------------------------------------------------------------------
 /**
- * FreeType ƒtƒHƒ“ƒg face
+ * FreeType ï¿½tï¿½Hï¿½ï¿½ï¿½g face
  */
 class tFreeTypeFace
 {
-	ttstr FontName;		//!< ƒtƒHƒ“ƒg–¼
-	tBaseFreeTypeFace * Face; //!< Face ƒIƒuƒWƒFƒNƒg
-	FT_Face FTFace; //!< FreeType Face ƒIƒuƒWƒFƒNƒg
-	tjs_uint32 Options; //!< ƒtƒ‰ƒO
+	ttstr FontName;		//!< ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½ï¿½
+	tBaseFreeTypeFace * Face; //!< Face ï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½g
+	FT_Face FTFace; //!< FreeType Face ï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½g
+	tjs_uint32 Options; //!< ï¿½tï¿½ï¿½ï¿½O
 
 	typedef std::vector<FT_ULong> tGlyphIndexToCharcodeVector;
-	tGlyphIndexToCharcodeVector * GlyphIndexToCharcodeVector;		//!< ƒOƒŠƒtƒCƒ“ƒfƒbƒNƒX‚©‚ç•¶ŽšƒR[ƒh‚Ö‚Ì•ÏŠ·ƒ}ƒbƒv
-	tjs_int Height;		//!< ƒtƒHƒ“ƒgƒTƒCƒY(‚‚³) in pixel
+	tGlyphIndexToCharcodeVector * GlyphIndexToCharcodeVector;		//!< ï¿½Oï¿½ï¿½ï¿½tï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½ç•¶ï¿½ï¿½ï¿½Rï¿½[ï¿½hï¿½Ö‚Ì•ÏŠï¿½ï¿½}ï¿½bï¿½v
+	tjs_int Height;		//!< ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½Tï¿½Cï¿½Y(ï¿½ï¿½ï¿½ï¿½) in pixel
 
-	tjs_uint (*UnicodeToLocalChar)(tjs_char in); //!< SJIS‚È‚Ç‚ðUnicode‚É•ÏŠ·‚·‚éŠÖ”
-	tjs_char (*LocalCharToUnicode)(tjs_uint in); //!< Unicode‚ðSJIS‚È‚Ç‚É•ÏŠ·‚·‚éŠÖ”
+	tjs_uint (*UnicodeToLocalChar)(tjs_char in); //!< SJISï¿½È‚Ç‚ï¿½Unicodeï¿½É•ÏŠï¿½ï¿½ï¿½ï¿½ï¿½Öï¿½
+	tjs_char (*LocalCharToUnicode)(tjs_uint in); //!< Unicodeï¿½ï¿½SJISï¿½È‚Ç‚É•ÏŠï¿½ï¿½ï¿½ï¿½ï¿½Öï¿½
 
 	static inline tjs_int FT_PosToInt( tjs_int x ) { return (((x) + (1 << 5)) >> 6); }
 public:
@@ -95,7 +95,7 @@ public:
 	void GetUnderline( tjs_int& pos, tjs_int& thickness ) const {
 		tjs_int ppem = FTFace->size->metrics.y_ppem;
 		tjs_int upe = FTFace->units_per_EM;
-		tjs_int liney = 0; //‰ºü‚ÌˆÊ’u
+		tjs_int liney = 0; //ï¿½ï¿½ï¿½ï¿½ï¿½ÌˆÊ’u
 		tjs_int height = FT_PosToInt( FTFace->size->metrics.height );
 		liney = ((FTFace->ascender-FTFace->underline_position) * ppem) / upe;
 		thickness = (FTFace->underline_thickness * ppem) / upe;

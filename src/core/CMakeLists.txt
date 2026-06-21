@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.22)
 project(krkr2core)
 
 set(KRKR2CORE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-set(COCOS2DX_PATH ${KRKR2CORE_PATH}/../../thirdparty/port/cocos2d-x)
+set(AXMOL_PATH ${_AX_ROOT})
 
 # prepare static lib
 function(add_static_library TARGET LIBNAME)
@@ -58,8 +58,9 @@ file(GLOB KRKR2CORE_CODE
     ${KRKR2CORE_PATH}/utils/*.c
     ${KRKR2CORE_PATH}/utils/*.cpp
     ${KRKR2CORE_PATH}/utils/encoding/*.c
-    ${KRKR2CORE_PATH}/utils/minizip/*.c
-    ${KRKR2CORE_PATH}/utils/minizip/*.cpp
+    # minizip - include only zip.c (writing); unzip/ioapi provided by axmol
+    ${KRKR2CORE_PATH}/utils/minizip/zip.c
+    ${KRKR2CORE_PATH}/utils/tinyxml2/*.cpp
     ${KRKR2CORE_PATH}/utils/win32/*.cpp
     ${KRKR2CORE_PATH}/visual/gl/*.cpp
     ${KRKR2CORE_PATH}/visual/ogl/*.cpp
@@ -124,6 +125,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${KRKR2CORE_PATH}/base
     ${KRKR2CORE_PATH}/base/win32 
     ${KRKR2CORE_PATH}/environ 
+    ${KRKR2CORE_PATH}/environ/cocos2d 
     ${KRKR2CORE_PATH}/environ/win32 
     ${KRKR2CORE_PATH}/environ/android 
     ${KRKR2CORE_PATH}/environ/sdl 
@@ -141,18 +143,22 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${KRKR2CORE_PATH}/visual/RenderScript/rs
     ${KRKR2CORE_PATH}/../plugins
 
-    ${COCOS2DX_PATH}
-    ${COCOS2DX_PATH}/cocos
-    ${COCOS2DX_PATH}/cocos/scripting
-    ${COCOS2DX_PATH}/cocos/editor-support
-    ${COCOS2DX_PATH}/extensions
-    ${COCOS2DX_PATH}/external
-    ${COCOS2DX_PATH}/external/png/include/${PLATFORM}
-    ${COCOS2DX_PATH}/external/webp/include/${PLATFORM}
-    ${COCOS2DX_PATH}/external/freetype2/include/${PLATFORM}
-    ${COCOS2DX_PATH}/external/freetype2/include/${PLATFORM}/freetype2
+    # axmol engine includes
+    ${AXMOL_PATH}
+    ${AXMOL_PATH}/core
+    ${AXMOL_PATH}/core/platform
+    ${AXMOL_PATH}/extensions
+    ${AXMOL_PATH}/extensions/cocostudio/src
+    ${AXMOL_PATH}/extensions/GUI/src
+    ${AXMOL_PATH}/extensions/Particle3D/src
+    ${AXMOL_PATH}/3rdparty/box2d/include
 
+    # thirdparty includes
     ${PORTBUILD_PATH}/include
+    ${THIRDPARTY_PATH}/port
+    ${THIRDPARTY_PATH}/port/libarchive
+    ${THIRDPARTY_PATH}/port/opusfile-0.12/include
+    ${THIRDPARTY_PATH}/port/opus-1.3.1/include
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
@@ -203,28 +209,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     breakpad
     breakpad_client
     
-    # framework
+    # framework - axmol engine (replaces cocos2d + ext_*)
     sdl2_static
-    cocos2d
-    ext_unzip
-    ext_tinyxml2
-    ext_xxhash
-    ext_edtaa3func
-    ext_poly2tri
-    ext_recast
-    ext_clipper
-    ext_convertUTF
-    ext_pvmp3dec
-    chipmunk
-    BulletCollision
-    BulletDynamics
-    BulletMultiThreaded
-    LinearMath
-    MiniCL
+    axmol
+    GUI
+    cocostudio
 
     z
-    png
-    webp
-    tiff
-    freetype
 )

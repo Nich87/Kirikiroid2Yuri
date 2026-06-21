@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace cocos2d {
+namespace ax {
 	namespace ui {
 		class Text;
 		class Button;
@@ -28,10 +28,10 @@ public:
 
 	const std::string &GetText(const std::string &tid); // in utf8
 
-	bool initText(cocos2d::ui::Text *ctrl);
-	bool initText(cocos2d::ui::Button *ctrl);
-	bool initText(cocos2d::ui::Text *ctrl, const std::string &tid);
-	bool initText(cocos2d::ui::Button *ctrl, const std::string &tid);
+	bool initText(ax::ui::Text *ctrl);
+	bool initText(ax::ui::Button *ctrl);
+	bool initText(ax::ui::Text *ctrl, const std::string &tid);
+	bool initText(ax::ui::Button *ctrl, const std::string &tid);
 
 private:
 

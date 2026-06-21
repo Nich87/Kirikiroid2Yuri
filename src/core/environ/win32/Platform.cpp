@@ -1,5 +1,5 @@
 #include "Platform.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 //#undef WIN32
 #include <windows.h>
 #include <mmsystem.h>
@@ -7,11 +7,11 @@
 #include <codecvt>
 #include "StorageImpl.h"
 #include "SysInitIntf.h"
-#include "platform/CCFileUtils.h"
+#include "platform/FileUtils.h"
 #include <sys/stat.h>
 #include "Application.h"
 #include "EventIntf.h"
-#include "cocos/base/CCDirector.h"
+#include "base/Director.h"
 #include <shellapi.h>
 #include "XP3ArchiveRepack.h"
 #include "RenderManager.h"
@@ -289,7 +289,7 @@ void TVPExitApplication(int code) {
 }
 
 // const std::string &TVPGetInternalPreferencePath() {
-// 	static std::string ret(cocos2d::FileUtils::getInstance()->getWritablePath());
+// 	static std::string ret(ax::FileUtils::getInstance()->getWritablePath());
 // 	return ret;
 // }
 
@@ -328,9 +328,9 @@ bool TVP_stat(const tjs_char *name, tTVP_stat &s) {
 	bool ret = !_wstat64(name, &t);
 	s.st_mode = t.st_mode;
 	s.st_size = t.st_size;
-	s.st_atime = t.st_atime;
-	s.st_mtime = t.st_mtime;
-	s.st_ctime = t.st_ctime;
+	s.st_atime_ = t.st_atime;
+	s.st_mtime_ = t.st_mtime;
+	s.st_ctime_ = t.st_ctime;
 	return ret;
 }
 

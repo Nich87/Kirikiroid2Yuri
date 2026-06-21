@@ -1,20 +1,20 @@
 #include "GameMainMenu.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "Application.h"
 #include "WindowIntf.h"
 #include "ui/UIHelper.h"
-#include "base/CCEventDispatcher.h"
-#include "base/CCEventListenerTouch.h"
-#include "2d/CCActionInterval.h"
+#include "base/EventDispatcher.h"
+#include "base/EventListenerTouch.h"
+#include "2d/ActionInterval.h"
 #include "TickCount.h"
 #include "MenuItemImpl.h"
 #include "InGameMenuForm.h"
-#include "base/CCDirector.h"
-#include "platform/CCGLView.h"
+#include "base/Director.h"
+#include "platform/RenderView.h"
 #include "Platform.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 
 const float _shrinkSpd = 700; // px/sec
 const float _expandSpd = 700; // px/sec
@@ -61,21 +61,21 @@ bool TVPGameMainMenu::init() {
 	_eventDispatcher->removeEventListenersForTarget(_handler);
 	EventListenerTouchOneByOne *listener = EventListenerTouchOneByOne::create();
 	listener->setSwallowTouches(true);
-	listener->onTouchBegan = CC_CALLBACK_2(TVPGameMainMenu::onHandlerTouchBegan, this);
-	listener->onTouchMoved = CC_CALLBACK_2(TVPGameMainMenu::onHandlerTouchMoved, this);
-	listener->onTouchEnded = CC_CALLBACK_2(TVPGameMainMenu::onHandlerTouchEnded, this);
-	listener->onTouchCancelled = CC_CALLBACK_2(TVPGameMainMenu::onHandlerTouchCancelled, this);
+	listener->onTouchBegan = AX_CALLBACK_2(TVPGameMainMenu::onHandlerTouchBegan, this);
+	listener->onTouchMoved = AX_CALLBACK_2(TVPGameMainMenu::onHandlerTouchMoved, this);
+	listener->onTouchEnded = AX_CALLBACK_2(TVPGameMainMenu::onHandlerTouchEnded, this);
+	listener->onTouchCancelled = AX_CALLBACK_2(TVPGameMainMenu::onHandlerTouchCancelled, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _handler);
 
 	listener = EventListenerTouchOneByOne::create();
 	listener->setSwallowTouches(true);
-	listener->onTouchBegan = CC_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchBegan, this);
-	listener->onTouchMoved = CC_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchMoved, this);
-	listener->onTouchEnded = CC_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchEnded, this);
-	listener->onTouchCancelled = CC_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchCancelled, this);
+	listener->onTouchBegan = AX_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchBegan, this);
+	listener->onTouchMoved = AX_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchMoved, this);
+	listener->onTouchEnded = AX_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchEnded, this);
+	listener->onTouchCancelled = AX_CALLBACK_2(TVPGameMainMenu::onBackgroundTouchCancelled, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, _root);
 
-	reader.findWidget("btn_gamemenu")->addClickEventListener([this](Ref*){
+	reader.findWidget("btn_gamemenu")->addClickEventListener([this](ax::Object*){
 		iTJSDispatch2 *menuobj = TVPGetMenuDispatch((tjs_intptr_t)TVPGetActiveWindow());
 		if (!menuobj) return;
 		tTJSNI_MenuItem *menu;
@@ -86,7 +86,7 @@ bool TVPGameMainMenu::init() {
 		shrink();
 	});
 
-	reader.findWidget("btn_window")->addClickEventListener([this](Ref*){
+	reader.findWidget("btn_window")->addClickEventListener([this](ax::Object*){
 		TVPMainScene::GetInstance()->showWindowManagerOverlay(true);
 		shrink();
 	});
@@ -95,15 +95,15 @@ bool TVPGameMainMenu::init() {
 	_icon_mouse = reader.findController("icon_mouse");
 	setMouseIcon(true);
 
-	reader.findWidget("btn_mousemode")->addClickEventListener([this](Ref*){
+	reader.findWidget("btn_mousemode")->addClickEventListener([this](ax::Object*){
 		TVPMainScene::GetInstance()->toggleVirtualMouseCursor();
 		setMouseIcon(!TVPMainScene::GetInstance()->isVirtualMouseMode());
 		shrink();
 	});
 
-	reader.findWidget("btn_keyboard")->addClickEventListener([this](Ref*){
- 		Size screenSize = cocos2d::Director::getInstance()->getOpenGLView()->getFrameSize();
-#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
+	reader.findWidget("btn_keyboard")->addClickEventListener([this](ax::Object*){
+ 		Size screenSize = ax::Director::getInstance()->getGLView()->getFrameSize();
+#if AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
 		TVPShowIME(0, 0, screenSize.width, screenSize.height);
 #else
 		TVPMainScene::GetInstance()->attachWithIME();
@@ -111,8 +111,8 @@ bool TVPGameMainMenu::init() {
 		shrink();
 	});
 
-	reader.findWidget("btn_exit")->addClickEventListener([this](Ref*){
-		Application->PostUserMessage([](){
+	reader.findWidget("btn_exit")->addClickEventListener([this](ax::Object*){
+		::Application->PostUserMessage([](){
 			TVPGetActiveWindow()->Close();
 		});
 		shrink();
@@ -126,7 +126,7 @@ void TVPGameMainMenu::setMouseIcon(bool bMouse) {
 	if (_icon_touch) _icon_touch->setVisible(!bMouse);
 }
 
-bool TVPGameMainMenu::onHandlerTouchBegan(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+bool TVPGameMainMenu::onHandlerTouchBegan(ax::Touch *touch, ax::Event *unusedEvent) {
 	_hitted = false;
 	_touchBeganPosition = _handler->convertToNodeSpace(touch->getLocation());
 	Rect bb;
@@ -144,7 +144,7 @@ bool TVPGameMainMenu::onHandlerTouchBegan(cocos2d::Touch *touch, cocos2d::Event 
 	return _hitted;
 }
 
-void TVPGameMainMenu::onHandlerTouchMoved(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onHandlerTouchMoved(ax::Touch *touch, ax::Event *unusedEvent) {
 	Vec2 nsp = _handler->convertToNodeSpace(touch->getLocation());
 	Vec2 movDist = nsp - _touchBeganPosition;
 	if (!_draggingY && std::abs(movDist.y) > 1) {
@@ -178,7 +178,7 @@ void TVPGameMainMenu::onHandlerTouchMoved(cocos2d::Touch *touch, cocos2d::Event 
 	_root->setPositionY(newPosY);
 }
 
-void TVPGameMainMenu::onHandlerTouchEnded(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onHandlerTouchEnded(ax::Touch *touch, ax::Event *unusedEvent) {
 	_hitted = false;
 	Vec2 nsp = _handler->convertToNodeSpace(touch->getLocation());
 	bool isClick = TVPGetTickCount() - _touchBeganTime < 500;
@@ -200,7 +200,7 @@ void TVPGameMainMenu::onHandlerTouchEnded(cocos2d::Touch *touch, cocos2d::Event 
 	}
 }
 
-void TVPGameMainMenu::onHandlerTouchCancelled(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onHandlerTouchCancelled(ax::Touch *touch, ax::Event *unusedEvent) {
 	onHandlerTouchEnded(touch, unusedEvent);
 }
 
@@ -242,7 +242,7 @@ void TVPGameMainMenu::expand() {
 	_handler->runAction(FadeIn::create(_handlerFadeInTime));
 }
 
-bool TVPGameMainMenu::onBackgroundTouchBegan(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+bool TVPGameMainMenu::onBackgroundTouchBegan(ax::Touch *touch, ax::Event *unusedEvent) {
 	if (!_shrinked) {
 		shrink();
 		return true;
@@ -250,15 +250,15 @@ bool TVPGameMainMenu::onBackgroundTouchBegan(cocos2d::Touch *touch, cocos2d::Eve
 	return false;
 }
 
-void TVPGameMainMenu::onBackgroundTouchMoved(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onBackgroundTouchMoved(ax::Touch *touch, ax::Event *unusedEvent) {
 
 }
 
-void TVPGameMainMenu::onBackgroundTouchEnded(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onBackgroundTouchEnded(ax::Touch *touch, ax::Event *unusedEvent) {
 
 }
 
-void TVPGameMainMenu::onBackgroundTouchCancelled(cocos2d::Touch *touch, cocos2d::Event *unusedEvent) {
+void TVPGameMainMenu::onBackgroundTouchCancelled(ax::Touch *touch, ax::Event *unusedEvent) {
 
 }
 

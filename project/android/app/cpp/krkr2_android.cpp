@@ -1,10 +1,14 @@
 /* Include the SDL main definition header */
 #include <jni.h>
 #include "platform/android/jni/JniHelper.h"
-#include "cocos2d/AppDelegate.h"
-#include "cocos2d/MainScene.h"
+#include "AppDelegate.h"
+#include "MainScene.h"
 #include "ConfigManager/GlobalConfigManager.h"
 #include "Application.h"
+
+// Forward declarations
+extern void Android_PushEvents(const std::function<void()>& func);
+extern class tTVPApplication* Application;
 
 /*******************************************************************************
                  Functions called by JNI
@@ -38,7 +42,7 @@ static bool __DumpFilter(void *data) {
 //		NULL, true, -1);
 //}
 
-void cocos_android_app_init (JNIEnv* env) { // for cocos3.10+
+void axmol_android_app_init (JNIEnv* env) { // for axmol engine
 //	__InitAndroidDump();
 	__android_log_print(ANDROID_LOG_INFO,"## krkr2yuri","in cocos_android_app_init");
 	static TVPAppDelegate *pAppDelegate = new TVPAppDelegate();
@@ -79,14 +83,14 @@ extern "C" {
 	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesBegin(JNIEnv * env, jobject thiz, jint id, jfloat x, jfloat y) {
 		intptr_t idlong = id;
 		Android_PushEvents([idlong, x, y](){
-			cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesBegin(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
+			ax::Director::getInstance()->getGLView()->handleTouchesBegin(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 		});
 	}
 
 	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesEnd(JNIEnv * env, jobject thiz, jint id, jfloat x, jfloat y) {
 		intptr_t idlong = id;
 		Android_PushEvents([idlong, x, y](){
-			cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesEnd(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
+			ax::Director::getInstance()->getGLView()->handleTouchesEnd(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 		});
 	}
 
@@ -102,7 +106,7 @@ extern "C" {
 			env->GetFloatArrayRegion(ys, 0, size, &y);
 			idlong = id;
 			Android_PushEvents([idlong, x, y](){
-				cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesMove(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
+				ax::Director::getInstance()->getGLView()->handleTouchesMove(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 			});
 			return;
 		}
@@ -120,7 +124,7 @@ extern "C" {
 			idlong[i] = id[i];
 
 		Android_PushEvents([idlong, x, y](){
-			cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesMove(idlong.size(), (intptr_t*)&idlong[0], (float*)&x[0], (float*)&y[0]);
+			ax::Director::getInstance()->getGLView()->handleTouchesMove(idlong.size(), (intptr_t*)&idlong[0], (float*)&x[0], (float*)&y[0]);
 		});
 	}
 
@@ -136,7 +140,7 @@ extern "C" {
 			env->GetFloatArrayRegion(ys, 0, size, &y);
 			idlong = id;
 			Android_PushEvents([idlong, x, y](){
-				cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesCancel(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
+				ax::Director::getInstance()->getGLView()->handleTouchesCancel(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 			});
 			return;
 		}
@@ -154,7 +158,7 @@ extern "C" {
 			idlong[i] = id[i];
 
 		Android_PushEvents([idlong, x, y](){
-			cocos2d::Director::getInstance()->getOpenGLView()->handleTouchesCancel(idlong.size(), (intptr_t*)&idlong[0], (float*)&x[0], (float*)&y[0]);
+			ax::Director::getInstance()->getGLView()->handleTouchesCancel(idlong.size(), (intptr_t*)&idlong[0], (float*)&x[0], (float*)&y[0]);
 		});
 	}
 
@@ -170,24 +174,24 @@ extern "C" {
 #define KEYCODE_DEL 0x43
 
 	JNIEXPORT jboolean JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeKeyAction(JNIEnv * env, jclass cls, jint keyCode, jboolean isPress) {
-		cocos2d::EventKeyboard::KeyCode pKeyCode;
+		ax::EventKeyboard::KeyCode pKeyCode;
 		switch (keyCode) {
-		case KEYCODE_BACK		: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_ESCAPE	; break;
-		case KEYCODE_MENU		: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_MENU		; break;
-		case KEYCODE_DPAD_UP	: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_DPAD_UP	; break;
-		case KEYCODE_DPAD_DOWN	: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_DPAD_DOWN	; break;
-		case KEYCODE_DPAD_LEFT	: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_DPAD_LEFT	; break;
-		case KEYCODE_DPAD_RIGHT	: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_DPAD_RIGHT; break;
-		case KEYCODE_ENTER		: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_ENTER		; break;
-		case KEYCODE_PLAY		: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_PLAY		; break;
-		case KEYCODE_DPAD_CENTER: pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_DPAD_CENTER; break;
-        case KEYCODE_DEL          : pKeyCode = cocos2d::EventKeyboard::KeyCode::KEY_BACKSPACE; break;
+		case KEYCODE_BACK		: pKeyCode = ax::EventKeyboard::KeyCode::KEY_ESCAPE	; break;
+		case KEYCODE_MENU		: pKeyCode = ax::EventKeyboard::KeyCode::KEY_MENU		; break;
+		case KEYCODE_DPAD_UP	: pKeyCode = ax::EventKeyboard::KeyCode::KEY_DPAD_UP	; break;
+		case KEYCODE_DPAD_DOWN	: pKeyCode = ax::EventKeyboard::KeyCode::KEY_DPAD_DOWN	; break;
+		case KEYCODE_DPAD_LEFT	: pKeyCode = ax::EventKeyboard::KeyCode::KEY_DPAD_LEFT	; break;
+		case KEYCODE_DPAD_RIGHT	: pKeyCode = ax::EventKeyboard::KeyCode::KEY_DPAD_RIGHT; break;
+		case KEYCODE_ENTER		: pKeyCode = ax::EventKeyboard::KeyCode::KEY_ENTER		; break;
+		case KEYCODE_PLAY		: pKeyCode = ax::EventKeyboard::KeyCode::KEY_PLAY		; break;
+		case KEYCODE_DPAD_CENTER: pKeyCode = ax::EventKeyboard::KeyCode::KEY_DPAD_CENTER; break;
+        case KEYCODE_DEL          : pKeyCode = ax::EventKeyboard::KeyCode::KEY_BACKSPACE; break;
 		default: return JNI_FALSE;
 		}
 
 		Android_PushEvents([pKeyCode, isPress](){
-			cocos2d::EventKeyboard event(pKeyCode, isPress);
-			cocos2d::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
+			ax::EventKeyboard event(pKeyCode, isPress);
+			ax::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
 		});
 		return JNI_TRUE;
 	}
@@ -197,15 +201,16 @@ extern "C" {
 		if (pszText && *pszText) {
 			std::string str = pszText;
 			Android_PushEvents([str](){
-				cocos2d::IMEDispatcher::sharedDispatcher()->dispatchInsertText(str.c_str(), str.length());
+				ax::IMEDispatcher::sharedDispatcher()->dispatchInsertText(str.c_str(), str.length());
 			});
 		}
 		env->ReleaseStringUTFChars(text, pszText);
 	}
 
 	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeDeleteBackward(JNIEnv* env, jclass cls) {
-		Android_PushEvents(std::bind(&cocos2d::IMEDispatcher::dispatchDeleteBackward,
-			cocos2d::IMEDispatcher::sharedDispatcher()));
+		Android_PushEvents([]() {
+			ax::IMEDispatcher::sharedDispatcher()->dispatchDeleteBackward(1);
+		});
 	}
 
 	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeCharInput(JNIEnv* env, jclass cls, jint keyCode) {
@@ -236,17 +241,17 @@ extern "C" {
 	JNIEXPORT jboolean JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeHoverMoved(JNIEnv* env, jclass cls, jfloat x, jfloat y)
 	{
 		Android_PushEvents([x, y]() {
-			cocos2d::GLView *glview = cocos2d::Director::getInstance()->getOpenGLView();
+			ax::RenderView *glview = ax::Director::getInstance()->getGLView();
 			float _scaleX = glview->getScaleX(), _scaleY = glview->getScaleY();
 			_mouseX = x; _mouseY = y;
-			const cocos2d::Rect _viewPortRect = glview->getViewPortRect();
+			const ax::Rect _viewPortRect = glview->getViewPortRect();
 
 			float cursorX = (_mouseX - _viewPortRect.origin.x) / _scaleX;
 			float cursorY = (_viewPortRect.origin.y + _viewPortRect.size.height - _mouseY) / _scaleY;
 
-			cocos2d::EventMouse event(cocos2d::EventMouse::MouseEventType::MOUSE_MOVE);
-			event.setCursorPosition(cursorX, cursorY);
-			cocos2d::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
+			ax::EventMouse event(ax::EventMouse::MouseEventType::MOUSE_MOVE);
+			event.setMouseInfo(cursorX, cursorY, ax::EventMouse::MouseButton::BUTTON_UNSET);
+			ax::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
 		});
 		return true;
 	}
@@ -254,17 +259,17 @@ extern "C" {
 	JNIEXPORT jboolean JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeMouseScrolled(JNIEnv* env, jclass cls, jfloat v)
 	{
 		Android_PushEvents([v]() {
-			cocos2d::GLView *glview = cocos2d::Director::getInstance()->getOpenGLView();
+			ax::RenderView *glview = ax::Director::getInstance()->getGLView();
 			float _scaleX = glview->getScaleX(), _scaleY = glview->getScaleY();
-			const cocos2d::Rect _viewPortRect = glview->getViewPortRect();
+			const ax::Rect _viewPortRect = glview->getViewPortRect();
 
 			float cursorX = (_mouseX - _viewPortRect.origin.x) / _scaleX;
 			float cursorY = (_viewPortRect.origin.y + _viewPortRect.size.height - _mouseY) / _scaleY;
 
-			cocos2d::EventMouse event(cocos2d::EventMouse::MouseEventType::MOUSE_SCROLL);
+			ax::EventMouse event(ax::EventMouse::MouseEventType::MOUSE_SCROLL);
 			event.setScrollData(0, v);
-			event.setCursorPosition(cursorX, cursorY);
-			cocos2d::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
+			event.setMouseInfo(cursorX, cursorY, ax::EventMouse::MouseButton::BUTTON_UNSET);
+			ax::Director::getInstance()->getEventDispatcher()->dispatchEvent(&event);
 		});
 		return true;
 	}
@@ -272,7 +277,7 @@ extern "C" {
 	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeOnLowMemory(JNIEnv* env, jclass cls)
 	{
 		Android_PushEvents([]() {
-			::Application->OnLowMemory();
+			Application->OnLowMemory();
 		});
 	}
 }

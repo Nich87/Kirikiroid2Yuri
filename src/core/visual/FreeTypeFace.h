@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 /*
-	Risa [‚è‚³]      alias ‹g—¢‹g—¢3 [kirikiri-3]
+	Risa [ï¿½è‚³]      alias ï¿½gï¿½ï¿½ï¿½gï¿½ï¿½3 [kirikiri-3]
 	 stands for "Risa Is a Stagecraft Architecture"
 	Copyright (C) 2000 W.Dee <dee@kikyou.info> and contributors
 
@@ -8,7 +8,7 @@
 */
 //---------------------------------------------------------------------------
 //! @file
-//! @brief FreeType ‚Ì Face Šî’êƒNƒ‰ƒX‚Ì’è‹`
+//! @brief FreeType ï¿½ï¿½ Face ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½Xï¿½Ì’ï¿½`
 //---------------------------------------------------------------------------
 
 #ifndef FREETYPEFACE_H
@@ -18,8 +18,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4819)
 #endif
-#include "freetype2/ft2build.h"
-#include "freetype2/freetype.h"
+#include "ft2build.h"
+#include "freetype/freetype.h"
 // #include FT_FREETYPE_H
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -31,15 +31,15 @@
 
 //---------------------------------------------------------------------------
 /**
- * FreeType Face ‚ÌŠî’êƒNƒ‰ƒX
+ * FreeType Face ï¿½ÌŠï¿½ï¿½Nï¿½ï¿½ï¿½X
  */
 class tBaseFreeTypeFace
 {
 public:
-	virtual FT_Face GetFTFace() const = 0; //!< FreeType ‚Ì Face ƒIƒuƒWƒFƒNƒg‚ð•Ô‚·
-	virtual void GetFaceNameList(std::vector<ttstr> & dest) const = 0; //!< ‚±‚ÌƒtƒHƒ“ƒgƒtƒ@ƒCƒ‹‚ªŽ‚Á‚Ä‚¢‚éƒtƒHƒ“ƒg‚ð”z—ñ‚Æ‚µ‚Ä•Ô‚·
+	virtual FT_Face GetFTFace() const = 0; //!< FreeType ï¿½ï¿½ Face ï¿½Iï¿½uï¿½Wï¿½Fï¿½Nï¿½gï¿½ï¿½Ô‚ï¿½
+	virtual void GetFaceNameList(std::vector<ttstr> & dest) const = 0; //!< ï¿½ï¿½ï¿½Ìƒtï¿½Hï¿½ï¿½ï¿½gï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½ï¿½zï¿½ï¿½Æ‚ï¿½ï¿½Ä•Ô‚ï¿½
 	virtual ~tBaseFreeTypeFace() {;}
-	virtual tjs_char GetDefaultChar() const = 0; //!< •`‰æ‚Å‚«‚È‚¢Žž‚É•`‰æ‚·‚é•¶ŽšƒR[ƒh‚ð•Ô‚·
+	virtual tjs_char GetDefaultChar() const = 0; //!< ï¿½`ï¿½ï¿½Å‚ï¿½ï¿½È‚ï¿½ï¿½ï¿½ï¿½É•`ï¿½æ‚·ï¿½é•¶ï¿½ï¿½ï¿½Rï¿½[ï¿½hï¿½ï¿½Ô‚ï¿½
 };
 //---------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 #include "XP3RepackForm.h"
 #include "StorageImpl.h"
-#include "cocos2d/MainScene.h"
+#include "MainScene.h"
 #include "PreferenceForm.h"
 #include "ConfigManager/LocaleConfigManager.h"
 #include "XP3ArchiveRepack.h"
@@ -11,16 +11,16 @@
 #include "ui/UICheckBox.h"
 #include "Platform.h"
 #include "MessageBox.h"
-#include "base/CCDirector.h"
-#include "base/CCScheduler.h"
+#include "base/Director.h"
+#include "base/Scheduler.h"
 #include "TickCount.h"
-#include "2d/CCLayer.h"
-#include "2d/CCActionInterval.h"
-#include "platform/CCFileUtils.h"
-#include "platform/CCDevice.h"
+#include "2d/Layer.h"
+#include "2d/ActionInterval.h"
+#include "platform/FileUtils.h"
+#include "platform/Device.h"
 
-using namespace cocos2d;
-using namespace cocos2d::ui;
+using namespace ax;
+using namespace ax::ui;
 bool TVPGetXP3ArchiveOffset(tTJSBinaryStream *st, const ttstr name, tjs_uint64 & offset, bool raise);
 
 static void WalkDir(const ttstr &dir, const std::function<void(const ttstr&, tjs_uint64)>& cb) {
@@ -76,7 +76,7 @@ TVPXP3Repacker::~TVPXP3Repacker()
 		TVPMainScene::GetInstance()->popUIForm(ProgressForm, TVPMainScene::eLeaveAniNone);
 		ProgressForm = nullptr;
 	}
-	cocos2d::Device::setKeepScreenOn(false);
+	ax::Device::setKeepScreenOn(false);
 }
 
 void TVPXP3Repacker::Start(std::vector<std::string> &filelist, const std::string &xp3filter)
@@ -84,9 +84,9 @@ void TVPXP3Repacker::Start(std::vector<std::string> &filelist, const std::string
 	if (!ProgressForm) {
 		ProgressForm = TVPSimpleProgressForm::create();
 		TVPMainScene::GetInstance()->pushUIForm(ProgressForm, TVPMainScene::eEnterAniNone);
-		std::vector<std::pair<std::string, std::function<void(cocos2d::Ref*)> > > vecButtons;
+		std::vector<std::pair<std::string, std::function<void(ax::Object*)> > > vecButtons;
 		LocaleConfigManager *locmgr = LocaleConfigManager::GetInstance();
-		vecButtons.emplace_back(locmgr->GetText("stop"), [this](Ref*) {
+		vecButtons.emplace_back(locmgr->GetText("stop"), [this](ax::Object*) {
 			ArcRepacker.Stop();
 		});
 		ProgressForm->initButtons(vecButtons);
@@ -103,14 +103,14 @@ void TVPXP3Repacker::Start(std::vector<std::string> &filelist, const std::string
 		std::bind(&TVPXP3Repacker::OnProgress, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
 		std::bind(&TVPXP3Repacker::OnError, this, std::placeholders::_1, std::placeholders::_2),
 		std::bind(&TVPXP3Repacker::OnEnded, this));
-	if (cocos2d::FileUtils::getInstance()->isFileExist(xp3filter)) {
+	if (ax::FileUtils::getInstance()->isFileExist(xp3filter)) {
 		ArcRepacker.SetXP3Filter(xp3filter);
 	}
 	TotalSize = 0;
 	for (const std::string &name : filelist) {
 		TotalSize += ArcRepacker.AddTask(name);
 	}
-	cocos2d::Device::setKeepScreenOn(true);
+	ax::Device::setKeepScreenOn(true);
 	ArcRepacker.Start();
 }
 
@@ -189,9 +189,9 @@ public:
 	void close();
 
 private:
-	void onOkClicked(Ref*);
+	void onOkClicked(ax::Object*);
 
-	cocos2d::ui::ListView *ListViewFiles, *ListViewPref;
+	ax::ui::ListView *ListViewFiles, *ListViewPref;
 
 	std::string RootDir;
 	std::vector<std::string> FileList;
@@ -223,7 +223,7 @@ void TVPXP3RepackFileListForm::bindBodyController(const NodeMap &allNodes)
 	btnList->addChild(btnCell->clone());
 
 	btn->setTitleText(locmgr->GetText("cancel"));
-	btn->addClickEventListener([this](Ref*) { close(); });
+	btn->addClickEventListener([this](ax::Object*) { close(); });
 	btnCell->setPositionX(containerSize.width / (nButton + 1) * 2);
 	btnList->addChild(btnCell->clone());
 
@@ -289,7 +289,7 @@ void TVPXP3RepackFileListForm::close()
 	removeFromParent();
 }
 
-void TVPXP3RepackFileListForm::onOkClicked(Ref*)
+void TVPXP3RepackFileListForm::onOkClicked(ax::Object*)
 {
 	class HackPreferenceItemCheckBox : public tPreferenceItemCheckBox {
 	public:

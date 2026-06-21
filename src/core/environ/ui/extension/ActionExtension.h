@@ -1,4 +1,4 @@
 #pragma once
-#include "cocos2d.h"
-#include "cocos-ext.h"
+#include "axmol.h"
+#include "axmol-ext.h"
 

@@ -67,19 +67,19 @@ protected:
 	virtual void bindHeaderController(const NodeMap &allNodes) override;
 
 	const tPreferenceScreen *Config = nullptr;
-	cocos2d::ui::ListView *PrefList;
-	cocos2d::ui::Button *_title;
+	ax::ui::ListView *PrefList;
+	ax::ui::Button *_title;
 };
 
-class iPreferenceItem : public cocos2d::ui::Widget {
+class iPreferenceItem : public ax::ui::Widget {
 public:
-	void initFromInfo(int idx, cocos2d::Size size, const std::string& title); // not tid
+	void initFromInfo(int idx, ax::Size size, const std::string& title); // not tid
 
 protected:
 	virtual void initController(const NodeMap &allNodes) = 0;
 	virtual const char *getUIFileName() const = 0;
-	cocos2d::ui::Text *_title;
-	cocos2d::Node *BgOdd, *BgEven;
+	ax::ui::Text *_title;
+	ax::Node *BgOdd, *BgEven;
 };
 
 template<typename TArg>
@@ -91,7 +91,7 @@ public:
 };
 
 template<typename T> // factory function
-T* CreatePreferenceItem(int idx, const cocos2d::Size &size, const std::string &title, const std::function<void(T*)> &initer) {
+T* CreatePreferenceItem(int idx, const ax::Size &size, const std::string &title, const std::function<void(T*)> &initer) {
 	T *ret = new T;
 	ret->autorelease();
 	initer(ret);
@@ -100,7 +100,7 @@ T* CreatePreferenceItem(int idx, const cocos2d::Size &size, const std::string &t
 }
 
 template<typename T>
-T* CreatePreferenceItem(int idx, const cocos2d::Size &size, const std::string &title) {
+T* CreatePreferenceItem(int idx, const ax::Size &size, const std::string &title) {
 	T *ret = new T;
 	ret->autorelease();
 	ret->initFromInfo(idx, size, title);
@@ -116,8 +116,8 @@ protected:
 	virtual const char* getUIFileName() const override;
 	virtual void onPressStateChangedToNormal() override;
 	virtual void onPressStateChangedToPressed() override;
-	cocos2d::ui::CheckBox *checkbox;
-	cocos2d::Node *highlight;
+	ax::ui::CheckBox *checkbox;
+	ax::Node *highlight;
 };
 
 class tPreferenceItemWithHighlight : public iPreferenceItem {
@@ -127,7 +127,7 @@ protected:
 	virtual void onPressStateChangedToNormal() override;
 	virtual void onPressStateChangedToPressed() override;
 
-	cocos2d::Node *highlight = nullptr;
+	ax::Node *highlight = nullptr;
 };
 
 class tPreferenceItemSubDir : public tPreferenceItemWithHighlight {
@@ -161,11 +161,11 @@ protected:
 	virtual void onPressStateChangedToNormal() override;
 	virtual void onPressStateChangedToPressed() override;
 
-	void showForm(cocos2d::Ref*);
+	void showForm(ax::Object*);
 	void updateHightlight();
 
-	cocos2d::Node *highlight = nullptr;
-	cocos2d::ui::Text *selected = nullptr;
+	ax::Node *highlight = nullptr;
+	ax::ui::Text *selected = nullptr;
 	tPreferenceItemSelectListInfo* CurInfo;
 	std::string highlightTid;
 };
@@ -178,11 +178,11 @@ protected:
 	virtual void onPressStateChangedToNormal() override;
 	virtual void onPressStateChangedToPressed() override;
 
-	void showForm(cocos2d::Ref*);
+	void showForm(ax::Object*);
 	void updateHightlight();
 
-	cocos2d::Node *highlight = nullptr;
-	cocos2d::ui::Text *selected = nullptr;
+	ax::Node *highlight = nullptr;
+	ax::ui::Text *selected = nullptr;
 	std::string highlightTid;
 };
 
@@ -197,11 +197,11 @@ protected:
 	virtual void onPressStateChangedToNormal() override;
 	virtual void onPressStateChangedToPressed() override;
 
-	void showInput(cocos2d::Ref*);
+	void showInput(ax::Object*);
 	void updateText();
 
-	cocos2d::Node *highlight;
-	cocos2d::ui::Text *selected;
+	ax::Node *highlight;
+	ax::ui::Text *selected;
 };
 
 class TVPCustomPreferenceForm : public iTVPBaseForm {
@@ -220,8 +220,8 @@ protected:
 
 	std::function<std::pair<std::string, std::string>(int)> _getter;
 	std::function<void(int, const std::pair<std::string, std::string>&)> _setter;
-	cocos2d::ui::ListView *_listview;
-	cocos2d::ui::Button *_title;
+	ax::ui::ListView *_listview;
+	ax::ui::Button *_title;
 };
 
 class iPreferenceItemSlider : public tPreferenceItem<float> {
@@ -232,8 +232,8 @@ public:
 	virtual void initController(const NodeMap &allNodes) override;
 
 protected:
-	cocos2d::ui::Slider* _slider;
-	cocos2d::ui::Button *_reset;
+	ax::ui::Slider* _slider;
+	ax::ui::Button *_reset;
 	float _resetValue;
 };
 
@@ -250,8 +250,8 @@ protected:
 
 	virtual void onEnter() override;
 
-	cocos2d::Node *_icon;
-	cocos2d::Node *_cursor;
+	ax::Node *_icon;
+	ax::Node *_cursor;
 	std::function<float(float)> _curScaleConv;
 };
 
@@ -266,18 +266,18 @@ protected:
 	virtual void initController(const NodeMap &allNodes) override;
 	virtual const char* getUIFileName() const override;
 
-	cocos2d::ui::Text *_text;
+	ax::ui::Text *_text;
 	std::function<std::string(float)> _strScaleConv;
 };
 
 class tPreferenceItemDeletable : public iPreferenceItem {
 	virtual void initController(const NodeMap &allNodes) override;
 	virtual const char* getUIFileName() const override;
-	void onTouchEvent(cocos2d::Ref*, cocos2d::ui::Widget::TouchEventType);
-	void walkTouchEvent(cocos2d::ui::Widget* node);
+	void onTouchEvent(ax::Object*, ax::ui::Widget::TouchEventType);
+	void walkTouchEvent(ax::ui::Widget* node);
 
-	cocos2d::ui::Widget *_deleteIcon;
-	cocos2d::ui::ScrollView *_scrollview;
+	ax::ui::Widget *_deleteIcon;
+	ax::ui::ScrollView *_scrollview;
 
 public:
 	std::function<void(tPreferenceItemDeletable*)> _onDelete;
@@ -287,7 +287,7 @@ class tPreferenceItemKeyMap : public tPreferenceItemDeletable {
 public:
 	std::pair<int, int> _keypair;
 
-	void initData(int k, int v, int idx, const cocos2d::Size &size);
+	void initData(int k, int v, int idx, const ax::Size &size);
 };
 
 class KeyMapPreferenceForm : public TVPPreferenceForm {

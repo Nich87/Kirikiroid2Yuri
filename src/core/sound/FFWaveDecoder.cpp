@@ -19,6 +19,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 };
+#include "../movie/ffmpeg/FFmpegCompat.h"
 
 class FFWaveDecoder : public tTVPWaveDecoder // decoder interface
 {
@@ -38,6 +39,7 @@ class FFWaveDecoder : public tTVPWaveDecoder // decoder interface
     AVPacket Packet;
     tTJSBinaryStream *InputStream; // input stream
     AVFormatContext *FormatCtx;
+    AVCodecContext *CodecCtx;
     AVFrame *frame;
 
     int audio_decode_frame();
@@ -45,10 +47,8 @@ class FFWaveDecoder : public tTVPWaveDecoder // decoder interface
         if (Packet.data)
 			av_packet_unref(&Packet);
         if(frame) av_frame_free(&frame), frame = nullptr;
+        if (CodecCtx) avcodec_free_context(&CodecCtx), CodecCtx = nullptr;
 		if (FormatCtx) {
-			for (unsigned int i = 0; i < FormatCtx->nb_streams; ++i) {
-				avcodec_close(FormatCtx->streams[i]->codec);
-			}
 			av_free(FormatCtx->pb->buffer);
 			av_free(FormatCtx->pb);
 			avformat_close_input(&FormatCtx), FormatCtx = nullptr;
@@ -61,6 +61,7 @@ public:
     FFWaveDecoder()
         : InputStream(nullptr)
         , FormatCtx(nullptr)
+        , CodecCtx(nullptr)
         , frame(nullptr)
     {
         memset(&Packet, 0, sizeof(Packet));
@@ -114,7 +115,7 @@ static unsigned char* _CopySmaples(unsigned char *dst, AVFrame *frame, int sampl
     int buf_pos = buf_index * sizeof(T);
     T* pDst = (T*)dst;
     for(int i = 0; i < samples; ++i, buf_pos += sizeof(T)) {
-        for(int j = 0; j < frame->channels; ++j) {
+        for(int j = 0; j < FFMPEG_FRAME_CHANNELS(frame); ++j) {
             *pDst++ = *(T*)(frame->data[j] + buf_pos);
         }
     }
@@ -139,13 +140,13 @@ static unsigned char* CopySmaples(unsigned char *dst, AVFrame *frame, int sample
     switch(frame->format) {
     case AV_SAMPLE_FMT_FLTP:
     case AV_SAMPLE_FMT_S32P:
-        if(frame->channels == 2)
+        if(FFMPEG_FRAME_CHANNELS(frame) == 2)
             return _CopySmaples2<tjs_uint32>(dst, frame, samples, buf_index);
         else
 			return _CopySmaples<tjs_uint32>(dst, frame, samples, buf_index);
         break;
     case AV_SAMPLE_FMT_S16P:
-        if(frame->channels == 2)
+        if(FFMPEG_FRAME_CHANNELS(frame) == 2)
 			return _CopySmaples2<tjs_uint16>(dst, frame, samples, buf_index);
         else
 			return _CopySmaples<tjs_uint16>(dst, frame, samples, buf_index);
@@ -202,7 +203,7 @@ bool FFWaveDecoder::SetPosition( tjs_uint64 samplepos )
 	}
     if (Packet.duration <= 0) {
         if (Packet.data)
-            av_free_packet(&Packet);
+            av_packet_unref(&Packet);
         if(!ReadPacket()) {
             int ret = avformat_seek_file(FormatCtx, StreamIdx, 0, 0, 0, AVSEEK_FLAG_BACKWARD);
             if(ret < 0) return false;
@@ -215,7 +216,7 @@ bool FFWaveDecoder::SetPosition( tjs_uint64 samplepos )
         int ret = avformat_seek_file(FormatCtx, StreamIdx, seek_temp, seek_temp, seek_temp, AVSEEK_FLAG_BACKWARD);
         if(ret < 0) return false;
         if (Packet.data)
-            av_free_packet(&Packet);
+            av_packet_unref(&Packet);
         if(!ReadPacket()) return false;
         if(seek_target < Packet.dts) {
             seek_temp -= Packet.duration;
@@ -250,9 +251,14 @@ bool FFWaveDecoder::SetStream( const ttstr & url )
         0,                  // Write callback function (not used in this example) 
         AVSeekFunc);
 
-    AVInputFormat *fmt = NULL;
     tTJSNarrowStringHolder holder(url.c_str());
-    av_probe_input_buffer2(pIOCtx, &fmt, holder, NULL, 0, 0);
+#if LIBAVFORMAT_VERSION_MAJOR >= 60
+    const AVInputFormat *fmt = NULL;
+    av_probe_input_buffer(pIOCtx, &fmt, holder, NULL, 0, 0);
+#else
+    AVInputFormat *fmt = NULL;
+    av_probe_input_buffer(pIOCtx, &fmt, holder, NULL, 0, 0);
+#endif
     AVFormatContext *ic = FormatCtx = avformat_alloc_context();
     ic->pb = pIOCtx;
 	if (avformat_open_input(&ic, "", fmt, nullptr) < 0) {
@@ -274,36 +280,47 @@ bool FFWaveDecoder::SetStream( const ttstr & url )
         return false;
     }
     
-    AVCodecContext *avctx = ic->streams[StreamIdx]->codec;
-    if(avctx->codec_type != AVMEDIA_TYPE_AUDIO) {
-        return false;
-    }
-
-    AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
+    const AVCodec *codec = avcodec_find_decoder(ic->streams[StreamIdx]->codecpar->codec_id);
     if (!codec) {
         return false;
     }
 
-    avctx->codec_id = codec->id;
-    avctx->workaround_bugs = /*workaround_bugs*/1;
-    avctx->error_concealment = 3;
-    if (codec->capabilities & CODEC_CAP_DR1)
-        avctx->flags |= CODEC_FLAG_EMU_EDGE;
-
-    if (avcodec_open2(avctx, codec, nullptr) < 0)
-    {
+    CodecCtx = avcodec_alloc_context3(codec);
+    if (!CodecCtx) {
         return false;
     }
 
-    Format.SamplesPerSec = avctx->sample_rate;
-    Format.Channels = avctx->channels;
+    if (avcodec_parameters_to_context(CodecCtx, ic->streams[StreamIdx]->codecpar) < 0) {
+        avcodec_free_context(&CodecCtx);
+        CodecCtx = nullptr;
+        return false;
+    }
+
+    if (CodecCtx->codec_type != AVMEDIA_TYPE_AUDIO) {
+        avcodec_free_context(&CodecCtx);
+        CodecCtx = nullptr;
+        return false;
+    }
+
+    CodecCtx->workaround_bugs = 1;
+    CodecCtx->error_concealment = 3;
+
+    if (avcodec_open2(CodecCtx, codec, nullptr) < 0)
+    {
+        avcodec_free_context(&CodecCtx);
+        CodecCtx = nullptr;
+        return false;
+    }
+
+    Format.SamplesPerSec = CodecCtx->sample_rate;
+    Format.Channels = FFMPEG_CCTX_CHANNELS(CodecCtx);
     Format.Seekable = 
 		(FormatCtx->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK))
 		!= (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK);
 	Format.IsFloat = false;
 // 	Format.BigEndian = false;
 // 	Format.Signed = true;
-	switch (AVFmt = avctx->sample_fmt) {
+	switch (AVFmt = CodecCtx->sample_fmt) {
     case AV_SAMPLE_FMT_S16P:
     case AV_SAMPLE_FMT_S16:
         Format.BitsPerSample = 16;
@@ -341,41 +358,22 @@ bool FFWaveDecoder::SetStream( const ttstr & url )
 }
 
 int FFWaveDecoder::audio_decode_frame() {
-    AVStream *audio_st = AudioStream;
-    AVCodecContext *dec = audio_st->codec;
+    AVCodecContext *dec = CodecCtx;
     for (;;) {
-        /* NOTE: the audio packet can contain several frames */
-        while (pkt_temp.stream_index != -1) {
-            if(!frame) {
-                frame = av_frame_alloc();
-            } else {
-                av_frame_unref(frame);
-            }
+        /* Try to receive a frame from decoder */
+        if (!frame) {
+            frame = av_frame_alloc();
+        } else {
+            av_frame_unref(frame);
+        }
 
-            int got_frame;
-            int len1 = avcodec_decode_audio4(dec, frame, &got_frame, &pkt_temp);
-            if(len1 < 0) {
-                /* if error, we skip the frame */
-                pkt_temp.size = 0;
-                break;
-            }
-            pkt_temp.dts = pkt_temp.pts = AV_NOPTS_VALUE;
-            pkt_temp.data += len1;
-            pkt_temp.size -= len1;
-            if ((pkt_temp.data && pkt_temp.size <= 0) || (!pkt_temp.data && !got_frame))
-                pkt_temp.stream_index = -1;
-            if (!pkt_temp.data && !got_frame)
-                ; //is->audio_finished = is->audio_pkt_temp_serial;
-
-            if (!got_frame)
-                continue;
-
+        int ret = avcodec_receive_frame(dec, frame);
+        if (ret == 0) {
+            /* Got a frame */
             AVRational tb = {1, frame->sample_rate};
 
             if (frame->pts != AV_NOPTS_VALUE)
                 frame->pts = av_rescale_q(frame->pts, dec->time_base, tb);
-            else if (frame->pkt_pts != AV_NOPTS_VALUE)
-                frame->pts = av_rescale_q(frame->pkt_pts, audio_st->time_base, tb);
             else if (audio_frame_next_pts != AV_NOPTS_VALUE) {
                 AVRational a = { 1, (int)Format.SamplesPerSec };
                 frame->pts = av_rescale_q(audio_frame_next_pts, a, tb);
@@ -384,25 +382,35 @@ int FFWaveDecoder::audio_decode_frame() {
             if (frame->pts != AV_NOPTS_VALUE)
                 audio_frame_next_pts = frame->pts + frame->nb_samples;
 
-//             int data_size = av_samples_get_buffer_size(NULL, av_frame_get_channels(frame),
-//                 frame->nb_samples, (AVSampleFormat)frame->format, 1);
-
-            int wanted_nb_samples = frame->nb_samples;
-
             return frame->nb_samples;
+        } else if (ret == AVERROR(EAGAIN)) {
+            /* Need more data - send next packet */
+        } else {
+            /* Error or EOF */
+            break;
         }
 
         /* free the current packet */
         if (Packet.data)
-            av_free_packet(&Packet);
-
-        pkt_temp.stream_index = -1;
+            av_packet_unref(&Packet);
 
         /* read next packet */
-        if(!ReadPacket()) return -1;
-        //packet_queue_get(&is->audioq, Packet, 1, &is->audio_pkt_temp_serial);
-        
-        pkt_temp = Packet;
+        if (!ReadPacket()) {
+            /* No more packets - flush decoder */
+            avcodec_send_packet(dec, nullptr);
+            return -1;
+        }
+
+        /* send packet to decoder */
+        ret = avcodec_send_packet(dec, &Packet);
+        if (ret < 0) {
+            /* Error sending packet, skip it */
+            memset(&Packet, 0, sizeof(Packet));
+            continue;
+        }
+
+        memset(&Packet, 0, sizeof(Packet));
+        /* Note: packet fully consumed by avcodec_send_packet */
     }
     return -1;
 }
@@ -417,7 +425,7 @@ bool FFWaveDecoder::ReadPacket() {
             stream_start_time = AudioStream->start_time;
             return true;
         }
-        av_free_packet(&Packet);
+        av_packet_unref(&Packet);
     }
     return false;
 }

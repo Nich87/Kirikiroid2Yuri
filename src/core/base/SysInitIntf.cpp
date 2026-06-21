@@ -36,8 +36,8 @@ extern void TVPGL_C_Init();
 //---------------------------------------------------------------------------
 void TVPSystemInit(void)
 {
-#if CC_TARGET_PLATFORM != CC_PLATFORM_WIN32
-#ifndef CC_TARGET_OS_IPHONE
+#if AX_TARGET_PLATFORM != AX_PLATFORM_WIN32
+#if AX_TARGET_PLATFORM != AX_PLATFORM_IOS
 	if (!TVPProtectInit()) return;
 #endif
 //#else

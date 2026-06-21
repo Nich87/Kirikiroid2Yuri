@@ -32,13 +32,13 @@ private:
 
 	std::function<void(const std::string &, const std::string &)> FuncOK;
 
-	cocos2d::ui::TextField *input1, *input2;
+	ax::ui::TextField *input1, *input2;
 };
 
 class TVPKeyPairSelectForm : public TVPSelectListForm {
 	typedef TVPSelectListForm inherit;
 
-	cocos2d::EventListenerKeyboard* _keylistener = nullptr;
+	ax::EventListenerKeyboard* _keylistener = nullptr;
 	std::vector<std::string> _keyinfo;
 	std::function<void(int)> _funcok;
 
@@ -49,6 +49,6 @@ public:
 
 	void initWithInfo();
 
-	void onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
-	void onKeyReleased(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::Event* event);
+	void onKeyPressed(ax::EventKeyboard::KeyCode keyCode, ax::Event* event);
+	void onKeyReleased(ax::EventKeyboard::KeyCode keyCode, ax::Event* event);
 };

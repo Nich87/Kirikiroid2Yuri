@@ -1,6 +1,8 @@
 #include "RenderManager.h"
-#include "renderer/CCTexture2D.h"
-typedef cocos2d::Texture2D::PixelFormat CCPixelFormat;
+#include "renderer/Texture2D.h"
+#include "renderer/backend/Enums.h"
+// axmol moved PixelFormat from Texture2D to backend namespace
+using CCPixelFormat = ax::backend::PixelFormat;
 #include "MsgIntf.h"
 #include "LayerBitmapIntf.h"
 #include "SysInitIntf.h"
@@ -357,15 +359,17 @@ public:
 	}
 	virtual tjs_int GetPitch() const { return Pitch; }
 
-	virtual cocos2d::Texture2D* GetAdapterTexture(cocos2d::Texture2D* origTex) override {
+	virtual ax::Texture2D* GetAdapterTexture(ax::Texture2D* origTex) override {
 		if (!origTex || origTex->getPixelsWide() != Width || origTex->getPixelsHigh() != Height) {
-			origTex = new cocos2d::Texture2D;
+			origTex = new ax::Texture2D;
 			origTex->autorelease();
 			origTex->initWithData(BmpData, Pitch * Height,
-				CCPixelFormat::RGBA8888, Pitch / 4, Height,
-				cocos2d::Size::ZERO);
+				CCPixelFormat::RGBA8, Pitch / 4, Height,
+				false);
 		} else {
-			origTex->updateWithData(BmpData, 0, 0, Pitch / 4, Height);
+			origTex->updateWithData(BmpData, (Pitch / 4) * Height * 4,
+				CCPixelFormat::RGBA8, CCPixelFormat::RGBA8,
+				Pitch / 4, Height, false);
 		}
 		return origTex;
 	}
@@ -452,16 +456,18 @@ public:
 		assert(0);
 	}
 
-	virtual cocos2d::Texture2D* GetAdapterTexture(cocos2d::Texture2D* origTex) override {
+	virtual ax::Texture2D* GetAdapterTexture(ax::Texture2D* origTex) override {
 		GetPixelData();
 		if (!origTex || origTex->getPixelsWide() != Width || origTex->getPixelsHigh() != Height) {
-			origTex = new cocos2d::Texture2D;
+			origTex = new ax::Texture2D;
 			origTex->autorelease();
 			origTex->initWithData(BmpData, Pitch * Height,
-				CCPixelFormat::RGBA8888, Width, Height,
-				cocos2d::Size::ZERO);
+				CCPixelFormat::RGBA8, Width, Height,
+				false);
 		} else {
-			origTex->updateWithData(BmpData, 0, 0, Width, Height);
+			origTex->updateWithData(BmpData, Width * Height * 4,
+				CCPixelFormat::RGBA8, CCPixelFormat::RGBA8,
+				Width, Height, false);
 		}
 		return origTex;
 	}
@@ -532,18 +538,29 @@ public:
 		return 1;
 	}
 
-	virtual cocos2d::Texture2D* GetAdapterTexture(cocos2d::Texture2D* origTex) override {
-		if (!origTex || origTex->getPixelsWide() != Width || origTex->getPixelsHigh() != _scanline.size()) {
-			origTex = new cocos2d::Texture2D;
-			origTex->autorelease();
-			origTex->initWithData(nullptr, Pitch * _scanline.size(),
-				CCPixelFormat::RGBA8888, Width, _scanline.size(),
-				cocos2d::Size::ZERO);
+	virtual ax::Texture2D* GetAdapterTexture(ax::Texture2D* origTex) override {
+		size_t height = _scanline.size();
+		bool needInit = (!origTex || origTex->getPixelsWide() != Width || origTex->getPixelsHigh() != height);
+		// Combine scanlines into a single buffer for axmol's updateWithData API
+		std::vector<tjs_uint8> fullBuf;
+		if (!needInit) {
+			fullBuf.resize(Width * height * 4);
+			int y = 0;
+			for (const tjs_uint8* line : _scanline) {
+				memcpy(&fullBuf[y * Width * 4], line, Width * 4);
+				++y;
+			}
 		}
-		int y = 0;
-		for (const tjs_uint8* line : _scanline) {
-			origTex->updateWithData(line, 0, y, Width, 1);
-			++y;
+		if (needInit) {
+			origTex = new ax::Texture2D;
+			origTex->autorelease();
+			origTex->initWithData(nullptr, Width * height * 4,
+				CCPixelFormat::RGBA8, Width, height,
+				false);
+		} else {
+			origTex->updateWithData(fullBuf.data(), Width * height * 4,
+				CCPixelFormat::RGBA8, CCPixelFormat::RGBA8,
+				Width, height, false);
 		}
 		return origTex;
 	}

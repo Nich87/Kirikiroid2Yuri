@@ -1,6 +1,6 @@
 #include "MainScene.h"
-#include "cocos2d.h"
-#include "cocos-ext.h"
+#include "axmol.h"
+#include "axmol-ext.h"
 #include "tjsCommHead.h"
 #include "StorageIntf.h"
 #include "EventIntf.h"
@@ -15,8 +15,8 @@
 #include "Random.h"
 #include "UtilStreams.h"
 #include "vkdefine.h"
-#include "base/CCEventListenerController.h"
-#include "base/CCController.h"
+#include "base/EventListenerController.h"
+#include "base/Controller.h"
 #include "ConfigManager/IndividualConfigManager.h"
 #include "Platform.h"
 #include "ui/ConsoleWindow.h"
@@ -33,7 +33,7 @@
 #include "Exception.h"
 #include "win32/SystemControl.h"
 
-USING_NS_CC;
+using namespace ax;
 
 #ifdef __ANDROID__
 #include <mutex>
@@ -55,7 +55,7 @@ class TVPWindowManagerOverlay;
 static TVPWindowManagerOverlay *_windowMgrOverlay = nullptr;
 static TVPConsoleWindow* _consoleWin = nullptr;
 static float _touchMoveThresholdSq;
-static cocos2d::Node *_mouseCursor;
+static ax::Node *_mouseCursor;
 static float _mouseCursorScale;
 static Vec2 _mouseTouchPoint, _mouseBeginPoint;
 static std::set<Touch*> _mouseTouches;
@@ -180,7 +180,7 @@ static void TVPProcessTouchQueue() {
         std::lock_guard<std::mutex> lock(g_touchQueueMutex);
         queue.swap(g_touchQueue);
     }
-    auto glview = Director::getInstance()->getOpenGLView();
+    auto glview = Director::getInstance()->getGLView();
     if (!glview) return;
     for (auto &e : queue) {
         switch (e.type) {
@@ -401,7 +401,7 @@ Sprite *TVPLoadCursorCUR(tTJSBinaryStream *pStream) {
 				}
 			}
 		}
-		cocos2d::Image *surface = new cocos2d::Image;
+		ax::Image *surface = new ax::Image;
 		surface->initWithRawData(&pixbuf[0], pixbuf.size(), bmhdr.biWidth, bmhdr.biHeight, 0, false) ; //Texture2D::PixelFormat::RGBA8888, false);
 		Texture2D *tex = new Texture2D();
 		tex->initWithImage(surface);
@@ -444,8 +444,8 @@ tTVPMouseButton TVP_TMouseButton_To_tTVPMouseButton(int button) {
 	return (tTVPMouseButton)button;
 }
 // instead of TTVPWindowForm
-class TVPWindowLayer : public cocos2d::extension::ScrollView, public iWindowLayer {
-	typedef cocos2d::extension::ScrollView inherit;
+class TVPWindowLayer : public ax::extension::ScrollView, public iWindowLayer {
+	typedef ax::extension::ScrollView inherit;
 	tTJSNI_Window *TJSNativeInstance;
 	tjs_int ActualZoomDenom; // Zooming factor denominator (actual)
 	tjs_int ActualZoomNumer; // Zooming factor numerator (actual)
@@ -515,10 +515,10 @@ public:
 		PrimaryLayerArea->addChild(DrawSprite);
 		setAnchorPoint(Size::ZERO);
 		EventListenerMouse *evmouse = EventListenerMouse::create();
-		evmouse->onMouseScroll = std::bind(&TVPWindowLayer::onMouseScroll, this, std::placeholders::_1);
-		evmouse->onMouseDown = std::bind(&TVPWindowLayer::onMouseDownEvent, this, std::placeholders::_1);
-		evmouse->onMouseUp = std::bind(&TVPWindowLayer::onMouseUpEvent, this, std::placeholders::_1);
-		evmouse->onMouseMove = std::bind(&TVPWindowLayer::onMouseMoveEvent, this, std::placeholders::_1);
+		evmouse->onMouseScroll = [this](ax::EventMouse* e) -> bool { onMouseScroll(e); return true; };
+		evmouse->onMouseDown = [this](ax::EventMouse* e) -> bool { onMouseDownEvent(e); return true; };
+		evmouse->onMouseUp = [this](ax::EventMouse* e) -> bool { onMouseUpEvent(e); return true; };
+		evmouse->onMouseMove = [this](ax::EventMouse* e) -> bool { onMouseMoveEvent(e); return true; };
 		_eventDispatcher->addEventListenerWithSceneGraphPriority(evmouse, this);
 		setTouchEnabled(false);
 		//_touchListener->setSwallowTouches(true);
@@ -533,7 +533,7 @@ public:
 		return ret;
 	}
 
-	virtual cocos2d::Node *GetPrimaryArea() override {
+	virtual ax::Node *GetPrimaryArea() override {
 		return PrimaryLayerArea;
 	}
 
@@ -575,8 +575,7 @@ public:
 		return ret;
 	}
 
-	void onMouseDownEvent(Event *_e) {
-		EventMouse *e = static_cast<EventMouse*>(_e);
+	void onMouseDownEvent(EventMouse *e) {
 		switch (e->getMouseButton()) {
 		case EventMouse::MouseButton::BUTTON_RIGHT:
 			_mouseBtn = mbRight;
@@ -591,8 +590,7 @@ public:
 		}
 	}
 
-	void onMouseUpEvent(Event *_e) {
-		EventMouse *e = static_cast<EventMouse*>(_e);
+	void onMouseUpEvent(EventMouse *e) {
 		switch (e->getMouseButton()) {
 		case EventMouse::MouseButton::BUTTON_RIGHT:
 			_mouseBtn = mbRight;
@@ -607,16 +605,14 @@ public:
 		}
 	}
 
-	void onMouseMoveEvent(Event *_e) {
+	void onMouseMoveEvent(EventMouse *e) {
 		if (!_virutalMouseMode && _currentWindowLayer == this && !_touchMoved) {
-			EventMouse *e = static_cast<EventMouse*>(_e);
 			Vec2 pt(e->getCursorX(), e->getCursorY());
 			onMouseMove(pt);
 		}
 	}
 
-	void onMouseScroll(Event *_e) {
-		EventMouse *e = static_cast<EventMouse*>(_e);
+	void onMouseScroll(EventMouse *e) {
 		if (!_windowMgrOverlay) {
 			Vec2 nsp = PrimaryLayerArea->convertToNodeSpace(e->getLocation());
 			int X = nsp.x, Y = PrimaryLayerArea->getContentSize().height - nsp.y;
@@ -812,7 +808,7 @@ public:
 		switch (mode) {
 		case ::imDisable:
 		case ::imClose:
-#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
+#if AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
 			TVPHideIME();
 #else
 //#ifdef _MSC_VER
@@ -823,9 +819,9 @@ public:
 			//TVPMainScene::GetInstance()->attachWithIME();
 			//break;
 		default:
-#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
+#if AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
 		{
-			Size screenSize = cocos2d::Director::getInstance()->getOpenGLView()->getFrameSize();
+			Size screenSize = ax::Director::getInstance()->getGLView()->getFrameSize();
 			TVPShowIME(0, _textInputPosY, screenSize.width, screenSize.height / 4);
 		}
 #else
@@ -865,7 +861,7 @@ public:
 			_consoleWin = nullptr;
 			TVPMainScene::GetInstance()->scheduleUpdate();
 
-			cocos2d::Director::getInstance()->purgeCachedData();
+			ax::Director::getInstance()->purgeCachedData();
 			TVPControlAdDialog(0x10002, 0, 0); // ensure to close banner ad
 		}
 		Director* director = Director::getInstance();
@@ -1033,7 +1029,7 @@ public:
 	virtual void AddOverlay(tTJSNI_BaseVideoOverlay *ovl) {
 		if (_AllOverlay.find(ovl) != _AllOverlay.end()) return;
 		Sprite *pSprite = Sprite::create();
-		cocos2d::Texture2D* pTex = new cocos2d::Texture2D;
+		ax::Texture2D* pTex = new ax::Texture2D;
 		pSprite->setTexture(pTex);
 		//pSprite->setFlippedY(true);
 		pSprite->setAnchorPoint(Vec2(0, 1));
@@ -1058,14 +1054,14 @@ public:
 			tjs_int w, h;
 			if (!it.first->GetVideoSize(w, h)) continue;
 			Size videoSize(w, h);
-			cocos2d::Texture2D *pTex = pSprite->getTexture();
+			ax::Texture2D *pTex = pSprite->getTexture();
 			const Size &size = pTex->getContentSize();
 			std::function<void(const void*, int, int, int)> drawer;
 			if (size.width != videoSize.width || size.height != videoSize.height) {
 				if (size.width < videoSize.width || size.height < videoSize.height) {
 					drawer = [pTex, pSprite](const void* data, int pitch, int w, int h) {
-						pTex->initWithData(data, pitch * h, cocos2d::Texture2D::PixelFormat::RGBA8888,
-							w, h, cocos2d::Size::ZERO);
+						pTex->initWithData(data, pitch * h, ax::backend::PixelFormat::RGBA8,
+							w, h);
 						pSprite->setTextureRect(Rect(0, 0, w, h));
 					};
 				} else {
@@ -1576,7 +1572,7 @@ public:
 
 		auto funcUpdate = std::bind(&TVPWindowManagerOverlay::updateButtons, this);
 
-		_left->addClickEventListener([=](Ref*){
+		_left->addClickEventListener([=](ax::Object*){
 			if (!_currentWindowLayer || !_currentWindowLayer->_prevWindow) return;
 			//_currentWindowLayer->_prevWindow->setVisible(true);
 			Size size = _currentWindowLayer->_prevWindow->getViewSize();
@@ -1592,7 +1588,7 @@ public:
 			_right->setVisible(false);
 		});
 
-		_right->addClickEventListener([=](Ref*){
+		_right->addClickEventListener([=](ax::Object*){
 			if (!_currentWindowLayer || !_currentWindowLayer->_nextWindow) return;
 			//_currentWindowLayer->_nextWindow->setVisible(true);
 			Size size = _currentWindowLayer->_nextWindow->getViewSize();
@@ -1608,12 +1604,12 @@ public:
 			_right->setVisible(false);
 		});
 
-		_ok->addClickEventListener([](Ref*){
+		_ok->addClickEventListener([](ax::Object*){
 			TVPMainScene::GetInstance()->showWindowManagerOverlay(false);
 		});
 
 		ui::Button* fillscr = static_cast<ui::Button*>(allNodes.findController("fillscr"));
-		fillscr->addClickEventListener([](Ref*){
+		fillscr->addClickEventListener([](ax::Object*){
 			if (!_currentWindowLayer) return;
 			_currentWindowLayer->toogleFillScale();
 		});
@@ -1679,18 +1675,18 @@ TVPMainScene* TVPMainScene::CreateInstance() {
 }
 
 void TVPMainScene::initialize() {
-	auto glview = cocos2d::Director::getInstance()->getOpenGLView();
+	auto glview = ax::Director::getInstance()->getGLView();
 	Size screenSize = glview->getFrameSize();
 	Size designSize = glview->getDesignResolutionSize();
 	ScreenRatio = screenSize.height / designSize.height;
 	designSize.width = designSize.height * screenSize.width / screenSize.height;
 	initWithSize(designSize);
 	addChild(LayerColor::create(Color4B::BLACK, designSize.width, designSize.height));
-	GameNode = cocos2d::Node::create();
+	GameNode = ax::Node::create();
 	// horizontal
 	//std::swap(designSize.width, designSize.height);
 	GameNode->setContentSize(designSize);
-	UINode = cocos2d::Node::create();
+	UINode = ax::Node::create();
 	UINode->setContentSize(designSize);
 	UINode->setAnchorPoint(Vec2::ZERO);
 	UINode->setPosition(Vec2::ZERO);
@@ -1702,25 +1698,25 @@ void TVPMainScene::initialize() {
 	addChild(GameNode, GAME_SCENE_ORDER);
 
 	EventListenerKeyboard* keylistener = EventListenerKeyboard::create();
-	keylistener->onKeyPressed = CC_CALLBACK_2(TVPMainScene::onKeyPressed, this);
-	keylistener->onKeyReleased = CC_CALLBACK_2(TVPMainScene::onKeyReleased, this);
+	keylistener->onKeyPressed = AX_CALLBACK_2(TVPMainScene::onKeyPressed, this);
+	keylistener->onKeyReleased = AX_CALLBACK_2(TVPMainScene::onKeyReleased, this);
 	_eventDispatcher->addEventListenerWithFixedPriority(keylistener, 1);
 
 	_touchListener = EventListenerTouchOneByOne::create();
-	_touchListener->onTouchBegan = CC_CALLBACK_2(TVPMainScene::onTouchBegan, this);
-	_touchListener->onTouchMoved = CC_CALLBACK_2(TVPMainScene::onTouchMoved, this);
-	_touchListener->onTouchEnded = CC_CALLBACK_2(TVPMainScene::onTouchEnded, this);
-	_touchListener->onTouchCancelled = CC_CALLBACK_2(TVPMainScene::onTouchCancelled, this);
+	_touchListener->onTouchBegan = AX_CALLBACK_2(TVPMainScene::onTouchBegan, this);
+	_touchListener->onTouchMoved = AX_CALLBACK_2(TVPMainScene::onTouchMoved, this);
+	_touchListener->onTouchEnded = AX_CALLBACK_2(TVPMainScene::onTouchEnded, this);
+	_touchListener->onTouchCancelled = AX_CALLBACK_2(TVPMainScene::onTouchCancelled, this);
 
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_touchListener, this);
 
 	EventListenerController *ctrllistener = EventListenerController::create();
-	ctrllistener->onAxisEvent = CC_CALLBACK_3(TVPMainScene::onAxisEvent, this);
-	ctrllistener->onKeyDown = CC_CALLBACK_3(TVPMainScene::onPadKeyDown, this);
-	ctrllistener->onKeyUp = CC_CALLBACK_3(TVPMainScene::onPadKeyUp, this);
-	ctrllistener->onKeyRepeat = CC_CALLBACK_3(TVPMainScene::onPadKeyRepeat, this);
+	ctrllistener->onAxisEvent = AX_CALLBACK_3(TVPMainScene::onAxisEvent, this);
+	ctrllistener->onKeyDown = AX_CALLBACK_3(TVPMainScene::onPadKeyDown, this);
+	ctrllistener->onKeyUp = AX_CALLBACK_3(TVPMainScene::onPadKeyUp, this);
+	ctrllistener->onKeyRepeat = AX_CALLBACK_3(TVPMainScene::onPadKeyRepeat, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(ctrllistener, this);
-	cocos2d::Controller::startDiscoveryController(); // for win32 & iOS
+	ax::Controller::startDiscoveryController(); // for win32 & iOS
 }
 
 TVPMainScene * TVPMainScene::create() {
@@ -1733,7 +1729,7 @@ TVPMainScene * TVPMainScene::create() {
 	return ret;
 }
 
-void TVPMainScene::pushUIForm(cocos2d::Node *ui, eEnterAni ani) {
+void TVPMainScene::pushUIForm(ax::Node *ui, eEnterAni ani) {
 	TVPControlAdDialog(0x10002, 1, 0);
 	int n = UINode->getChildrenCount();
 	if (ani == eEnterAniNone) {
@@ -1741,10 +1737,10 @@ void TVPMainScene::pushUIForm(cocos2d::Node *ui, eEnterAni ani) {
 	} else if (ani == eEnterAniOverFromRight) {
 		if (n > 0) {
 			Size size = UINode->getContentSize();
-			cocos2d::Node *lastui = UINode->getChildren().back();
+			ax::Node *lastui = UINode->getChildren().back();
 			lastui->runAction(EaseQuadraticActionOut::create(MoveTo::create(UI_CHANGE_DURATION,
 				Vec2(size.width / -5, 0))));
-			cocos2d::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 0), size.width, size.height);
+			ax::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 0), size.width, size.height);
 			ColorMask->setPosition(Vec2(-size.width, 0));
 			ui->addChild(ColorMask);
 			ColorMask->runAction(FadeTo::create(UI_CHANGE_DURATION, 128));
@@ -1757,7 +1753,7 @@ void TVPMainScene::pushUIForm(cocos2d::Node *ui, eEnterAni ani) {
 		UINode->addChild(ui);
 	} else if (ani == eEnterFromBottom) {
 		Size size = UINode->getContentSize();
-		cocos2d::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 0), size.width, size.height);
+		ax::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 0), size.width, size.height);
 		ColorMask->runAction(FadeTo::create(UI_CHANGE_DURATION, 128));
 		ui->setPositionY(-ui->getContentSize().height);
 		ColorMask->addChild(ui);
@@ -1766,7 +1762,7 @@ void TVPMainScene::pushUIForm(cocos2d::Node *ui, eEnterAni ani) {
 	}
 }
 
-void TVPMainScene::popUIForm(cocos2d::Node *form, eLeaveAni ani) {
+void TVPMainScene::popUIForm(ax::Node *form, eLeaveAni ani) {
 	int n = UINode->getChildrenCount();
 	if (n <= 0) return;
 	if (n == 1) {
@@ -1790,7 +1786,7 @@ void TVPMainScene::popUIForm(cocos2d::Node *form, eLeaveAni ani) {
 			lastui->setPosition(size.width / -5, 0);
 			lastui->runAction(EaseQuadraticActionOut::create(MoveTo::create(UI_CHANGE_DURATION, Vec2::ZERO)));
 		}
-		cocos2d::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 128), size.width, size.height);
+		ax::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 128), size.width, size.height);
 		ColorMask->setPosition(Vec2(-size.width, 0));
 		ui->addChild(ColorMask);
 		ColorMask->runAction(FadeOut::create(UI_CHANGE_DURATION));
@@ -1799,7 +1795,7 @@ void TVPMainScene::popUIForm(cocos2d::Node *form, eLeaveAni ani) {
 			ui->removeFromParent();
 		})));
 	} else if (ani == eLeaveToBottom) {
-		cocos2d::Node *ColorMask = children.back();
+		ax::Node *ColorMask = children.back();
 		ColorMask->runAction(FadeOut::create(UI_CHANGE_DURATION));
 		Node *ui = ColorMask->getChildren().at(0);
 		if (form) CCAssert(form == ui, "must be the same form");
@@ -1853,7 +1849,7 @@ void TVPMainScene::doStartup(float dt, std::string path) {
 	IndividualConfigManager *pGlobalCfgMgr = IndividualConfigManager::GetInstance();
 	_consoleWin = TVPConsoleWindow::create(14, nullptr);
 
-	auto glview = cocos2d::Director::getInstance()->getOpenGLView();
+	auto glview = ax::Director::getInstance()->getGLView();
 	Size screenSize = glview->getFrameSize();
 	float scale = screenSize.height / getContentSize().height;
 	_consoleWin->setScale(1 / scale);
@@ -1873,7 +1869,7 @@ void TVPMainScene::doStartup(float dt, std::string path) {
 		_consoleWin = nullptr;
 		scheduleUpdate();
 
-		cocos2d::Director::getInstance()->purgeCachedData();
+		ax::Director::getInstance()->purgeCachedData();
 		TVPControlAdDialog(0x10002, 0, 0); // ensure to close banner ad
 	}
 
@@ -1884,7 +1880,7 @@ void TVPMainScene::doStartup(float dt, std::string path) {
 	}
 
 	if (pGlobalCfgMgr->GetValue<bool>("showfps", false)) {
-		_fpsLabel = cocos2d::Label::createWithTTF("", "DroidSansFallback.ttf", 16);
+		_fpsLabel = ax::Label::createWithTTF("", "DroidSansFallback.ttf", 16);
 		_fpsLabel->setAnchorPoint(Vec2(0, 1));
 		_fpsLabel->setPosition(Vec2(0, GameNode->getContentSize().height));
 		_fpsLabel->setColor(Color3B::WHITE);
@@ -1892,7 +1888,7 @@ void TVPMainScene::doStartup(float dt, std::string path) {
 		GameNode->addChild(_fpsLabel, GAME_MENU_ORDER);
 	}
 	int fps = pGlobalCfgMgr->GetValue<int>("fps_limit", 60);
-	cocos2d::Director::getInstance()->setAnimationInterval(1.0f / fps);
+	ax::Director::getInstance()->setAnimationInterval(1.0f / fps);
 }
 
 extern ttstr TVPGetErrorDialogTitle();
@@ -1943,7 +1939,7 @@ void TVPMainScene::update(float delta) {
 	}
 }
 
-cocos2d::Size TVPMainScene::getUINodeSize() {
+ax::Size TVPMainScene::getUINodeSize() {
 	return UINode->getContentSize();
 }
 
@@ -1971,12 +1967,12 @@ void TVPMainScene::rotateUI() {
 	}
 }
 
-void TVPMainScene::setMaskLayTouchBegain(const std::function<bool(cocos2d::Touch *, cocos2d::Event *)> &func) {
+void TVPMainScene::setMaskLayTouchBegain(const std::function<bool(ax::Touch *, ax::Event *)> &func) {
 	_func_mask_layer_touchbegan = func;
 }
 
 static float _getUIScale() {
-	auto glview = Director::getInstance()->getOpenGLView();
+	auto glview = Director::getInstance()->getGLView();
 	float factor = (glview->getScaleX() + glview->getScaleY()) / 2;
 	factor /= Device::getDPI(); // inch per pixel
 	Size screenSize = glview->getFrameSize();
@@ -1990,7 +1986,7 @@ static float _getUIScale() {
 // 	char tmp[128];
 // 	sprintf(tmp, "screenSize.width = %f", (float)screenSize.width);
 // 	TVPPrintLog(tmp);
-// #if CC_PLATFORM_IOS == CC_TARGET_PLATFORM
+// #if AX_PLATFORM_IOS == AX_TARGET_PLATFORM
 // 	return /*sqrtf*/(0.0005f / factor) * screenSize.width;
 // #else
 	return /*sqrtf*/(0.0005f / factor) * screenSize.width;
@@ -2130,7 +2126,7 @@ void TVPMainScene::popAllUIForm() {
 	auto children = UINode->getChildren();
 	for (auto ui : children) {
 		Size size = getContentSize();
-		cocos2d::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 128), size.width, size.height);
+		ax::Node *ColorMask = MaskLayer::create(Color4B(0, 0, 0, 128), size.width, size.height);
 		ColorMask->setPosition(Vec2(-size.width, 0));
 		ui->addChild(ColorMask);
 		ColorMask->runAction(FadeOut::create(UI_CHANGE_DURATION));
@@ -2177,7 +2173,7 @@ bool TVPMainScene::isVirtualMouseMode() const {
 	return _mouseCursor && _mouseCursor->isVisible();
 }
 
-bool TVPMainScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
+bool TVPMainScene::onTouchBegan(ax::Touch *touch, ax::Event *event) {
 	if (UINode->getChildrenCount()) return false;
 	if (!_currentWindowLayer) return false;
 	if (!_virutalMouseMode || _windowMgrOverlay) return _currentWindowLayer->onTouchBegan(touch, event);
@@ -2211,7 +2207,7 @@ bool TVPMainScene::onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event) {
 	return true;
 }
 
-void TVPMainScene::onTouchMoved(cocos2d::Touch *touch, cocos2d::Event *event) {
+void TVPMainScene::onTouchMoved(ax::Touch *touch, ax::Event *event) {
 	if (!_currentWindowLayer) return;
 	if (!_virutalMouseMode || _windowMgrOverlay) return _currentWindowLayer->onTouchMoved(touch, event);
 	if (_mouseTouches.size()) {
@@ -2249,7 +2245,7 @@ void TVPMainScene::onTouchMoved(cocos2d::Touch *touch, cocos2d::Event *event) {
 	}
 }
 
-void TVPMainScene::onTouchEnded(cocos2d::Touch *touch, cocos2d::Event *event) {
+void TVPMainScene::onTouchEnded(ax::Touch *touch, ax::Event *event) {
 	if (!_currentWindowLayer) return;
 	if (!_virutalMouseMode || _windowMgrOverlay) return _currentWindowLayer->onTouchEnded(touch, event);
 	if (_mouseTouches.size() == 1) {
@@ -2270,7 +2266,7 @@ void TVPMainScene::onTouchEnded(cocos2d::Touch *touch, cocos2d::Event *event) {
 	}
 }
 
-void TVPMainScene::onTouchCancelled(cocos2d::Touch *touch, cocos2d::Event *event) {
+void TVPMainScene::onTouchCancelled(ax::Touch *touch, ax::Event *event) {
 	if (!_currentWindowLayer) return;
 	if (!_virutalMouseMode || _windowMgrOverlay) return _currentWindowLayer->onTouchCancelled(touch, event);
 	_mouseTouches.erase(touch);
@@ -2284,10 +2280,10 @@ bool TVPMainScene::attachWithIME()
 	if (ret)
 	{
 		// open keyboard
-		auto pGlView = Director::getInstance()->getOpenGLView();
+		auto pGlView = Director::getInstance()->getGLView();
 		if (pGlView)
 		{
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WP8 && CC_TARGET_PLATFORM != CC_PLATFORM_WINRT)
+#if (AX_TARGET_PLATFORM != AX_PLATFORM_WP8 && AX_TARGET_PLATFORM != AX_PLATFORM_WINRT)
 			pGlView->setIMEKeyboardState(true);
 #else
 			pGlView->setIMEKeyboardState(true, "");
@@ -2303,10 +2299,10 @@ bool TVPMainScene::detachWithIME()
 	if (ret)
 	{
 		// close keyboard
-		auto glView = Director::getInstance()->getOpenGLView();
+		auto glView = Director::getInstance()->getGLView();
 		if (glView)
 		{
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WP8 && CC_TARGET_PLATFORM != CC_PLATFORM_WINRT)
+#if (AX_TARGET_PLATFORM != AX_PLATFORM_WP8 && AX_TARGET_PLATFORM != AX_PLATFORM_WINRT)
 			glView->setIMEKeyboardState(false);
 #else
 			glView->setIMEKeyboardState(false, "");
@@ -2355,11 +2351,11 @@ void TVPMainScene::onTextInput(const std::string &text) {
 	}
 }
 
-void TVPMainScene::onAxisEvent(cocos2d::Controller* ctrl, int keyCode, cocos2d::Event *e) {
+void TVPMainScene::onAxisEvent(ax::Controller* ctrl, int keyCode, ax::Event *e) {
 	if (!_currentWindowLayer || !_currentWindowLayer->PrimaryLayerArea) return;
 	if (!_virutalMouseMode || _windowMgrOverlay) return;
 	const float threashold = 0.1f;
-	const cocos2d::Controller::KeyStatus& keyStatus = ctrl->getKeyStatus(keyCode);
+	const ax::Controller::KeyStatus& keyStatus = ctrl->getKeyStatus(keyCode);
 //	CCLOG("Axis KeyCode:%d Axis Value:%f", keyCode, keyStatus.value);
 	if (std::abs(keyStatus.value) < threashold) {
 		return;
@@ -2370,9 +2366,9 @@ void TVPMainScene::onAxisEvent(cocos2d::Controller* ctrl, int keyCode, cocos2d::
 	Vec2 pt = Vec2(_currentWindowLayer->_LastMouseX, _currentWindowLayer->_LastMouseY);
 	float *pValue = nullptr;
 	switch (keyCode) {
-	case cocos2d::Controller::JOYSTICK_LEFT_X:
+	case ax::Controller::JOYSTICK_LEFT_X:
 		pValue = &pt.x; break;
-	case cocos2d::Controller::JOYSTICK_LEFT_Y:
+	case ax::Controller::JOYSTICK_LEFT_Y:
 		pValue = &pt.y; break;
 	default:
 		return;
@@ -2390,7 +2386,7 @@ void TVPMainScene::onAxisEvent(cocos2d::Controller* ctrl, int keyCode, cocos2d::
 	_currentWindowLayer->onMouseMove(GameNode->convertToWorldSpace(newpt));
 }
 
-void TVPMainScene::onPadKeyDown(cocos2d::Controller* ctrl, int keyCode, cocos2d::Event *e) {
+void TVPMainScene::onPadKeyDown(ax::Controller* ctrl, int keyCode, ax::Event *e) {
 	if (!UINode->getChildren().empty()) return;
 	unsigned int code = TVPConvertPadKeyCodeToVKCode(keyCode);
 	if (!code || code >= 0x200) return;
@@ -2401,7 +2397,7 @@ void TVPMainScene::onPadKeyDown(cocos2d::Controller* ctrl, int keyCode, cocos2d:
 	}
 }
 
-void TVPMainScene::onPadKeyUp(cocos2d::Controller* ctrl, int keyCode, cocos2d::Event *e) {
+void TVPMainScene::onPadKeyUp(ax::Controller* ctrl, int keyCode, ax::Event *e) {
 	unsigned int code = TVPConvertPadKeyCodeToVKCode(keyCode);
 	if (!code || code >= 0x200) return;
 	code = _keymap[code];
@@ -2412,7 +2408,7 @@ void TVPMainScene::onPadKeyUp(cocos2d::Controller* ctrl, int keyCode, cocos2d::E
 	}
 }
 
-void TVPMainScene::onPadKeyRepeat(cocos2d::Controller* ctrl, int code, cocos2d::Event *e) {
+void TVPMainScene::onPadKeyRepeat(ax::Controller* ctrl, int code, ax::Event *e) {
 
 }
 
@@ -2443,15 +2439,15 @@ void TVPConsoleLog(const ttstr &l, bool important) {
 		TVPDrawSceneOnce(100); // force update in 10fps
 	}
 #ifdef _WIN32
-	//cocos2d::log("%s", utf8.c_str());
+	//ax::print("%s", utf8.c_str());
 	char buf[16384] = { 0 };
 	WideCharToMultiByte(CP_ACP, 0, l.c_str(), -1, buf, sizeof(buf), nullptr, FALSE);
 	puts(buf);
 #else
-    cocos2d::log("%ls", l.c_str());
+    ax::print("%ls", l.c_str());
 // 	std::string utf8;
 // 	if (StringUtils::UTF16ToUTF8(l.c_str(), utf8))
-// 		cocos2d::log("%s", utf8.c_str());
+// 		ax::print("%s", utf8.c_str());
 #endif
 }
 
@@ -2462,7 +2458,7 @@ namespace TJS {
 		assert(sizeof(tjs_char) == sizeof(char16_t));
 		std::u16string buf((const char16_t*)l);
 		if (StringUtils::UTF16ToUTF8(buf, utf8))
-			cocos2d::log("%s", utf8.c_str());
+			ax::print("%s", utf8.c_str());
 	}
 
 	void TVPConsoleLog(const tjs_nchar *format, ...) {
@@ -2470,14 +2466,14 @@ namespace TJS {
 		va_start(args, format);
 		char buf[MAX_LOG_LENGTH];
 		vsnprintf(buf, MAX_LOG_LENGTH - 3, format, args);
-		cocos2d::log("%s", buf);
+		ax::print("%s", buf);
 		va_end(args);
 	}
 }
 
 bool TVPGetScreenSize(tjs_int idx, tjs_int &w, tjs_int &h) {
 	if (idx != 0) return false;
-	const cocos2d::Size &size = cocos2d::Director::getInstance()->getOpenGLView()->getFrameSize();
+	const ax::Size &size = ax::Director::getInstance()->getGLView()->getFrameSize();
 	//w = size.height; h = size.width;
 	w = 2048;
 	h = w * (size.height / size.width);
@@ -2485,13 +2481,13 @@ bool TVPGetScreenSize(tjs_int idx, tjs_int &w, tjs_int &h) {
 }
 
 ttstr TVPGetDataPath() {
-	std::string path = cocos2d::FileUtils::getInstance()->getWritablePath();
+	std::string path = ax::FileUtils::getInstance()->getWritablePath();
 	return path;
 }
 
 #include "StorageImpl.h"
 static std::string _TVPGetInternalPreferencePath() {
-	std::string path = cocos2d::FileUtils::getInstance()->getWritablePath();
+	std::string path = ax::FileUtils::getInstance()->getWritablePath();
 	path += ".preference";
 	if (!TVPCheckExistentLocalFolder(path)) {
 		TVPCreateFolders(path);
@@ -2521,29 +2517,19 @@ tjs_uint32 TVPGetCurrentShiftKeyState()
 
 ttstr TVPGetPlatformName()
 {
-	switch (cocos2d::Application::getInstance()->getTargetPlatform()) {
-	case ApplicationProtocol::Platform::OS_WINDOWS:
+	switch (ax::Application::getInstance()->getTargetPlatform()) {
+	case ax::ApplicationBase::Platform::Windows:
 		return "Win32";
-	case ApplicationProtocol::Platform::OS_LINUX:
+	case ax::ApplicationBase::Platform::Linux:
 		return "Linux";
-	case ApplicationProtocol::Platform::OS_MAC:
+	case ax::ApplicationBase::Platform::OSX:
 		return "MacOS";
-	case ApplicationProtocol::Platform::OS_ANDROID:
+	case ax::ApplicationBase::Platform::Android:
 		return "Android";
-	case ApplicationProtocol::Platform::OS_IPHONE:
+	case ax::ApplicationBase::Platform::iOS:
 		return "iPhone";
-	case ApplicationProtocol::Platform::OS_IPAD:
-		return "iPad";
-	case ApplicationProtocol::Platform::OS_BLACKBERRY:
-		return "BlackBerry";
-	case ApplicationProtocol::Platform::OS_NACL:
-		return "Nacl";
-	case ApplicationProtocol::Platform::OS_TIZEN:
-		return "Tizen";
-	case ApplicationProtocol::Platform::OS_WINRT:
+	case ax::ApplicationBase::Platform::WinUWP:
 		return "WinRT";
-	case ApplicationProtocol::Platform::OS_WP8:
-		return "WinPhone8";
 	default:
 		return "Unknown";
 	}

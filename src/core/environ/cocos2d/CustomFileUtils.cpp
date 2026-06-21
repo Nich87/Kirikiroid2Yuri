@@ -1,28 +1,34 @@
 #include "CustomFileUtils.h"
-#if CC_TARGET_PLATFORM == CC_PLATFORM_WIN32
-#include "platform/win32/CCFileUtils-win32.h"
-#elif CC_TARGET_PLATFORM == CC_PLATFORM_IOS
+#if AX_TARGET_PLATFORM == AX_PLATFORM_WIN32
+#include "platform/FileUtils.h"
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_IOS
 #import <Foundation/NSBundle.h>
 #import "platform/apple/CCFileUtils-apple.h"
-#elif CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
-#include "platform/android/CCFileUtils-android.h"
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
+#include "platform/android/FileUtils-android.h"
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_LINUX
+#include "platform/linux/FileUtils-linux.h"
 #endif
 #ifdef MINIZIP_FROM_SYSTEM
 #include <minizip/unzip.h>
 #else // from our embedded sources
-#include "external/unzip/unzip.h"
+#include "3rdparty/unzip/unzip.h"
 #endif
 #include "ConfigManager/LocaleConfigManager.h"
 
-NS_CC_BEGIN
+namespace ax {
 
 typedef
-#if CC_TARGET_PLATFORM == CC_PLATFORM_WIN32
+#if AX_TARGET_PLATFORM == AX_PLATFORM_WIN32
 FileUtilsWin32
-#elif CC_TARGET_PLATFORM == CC_PLATFORM_IOS
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_IOS
 FileUtilsApple
-#elif CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_ANDROID
 FileUtilsAndroid
+#elif AX_TARGET_PLATFORM == AX_PLATFORM_LINUX
+FileUtilsLinux
+#else
+FileUtils
 #endif
 FileUtilsInherit;
 
@@ -31,33 +37,36 @@ class CustomFileUtils : public FileUtilsInherit
 public:
 	CustomFileUtils();
 
-	void addAutoSearchArchive(const std::string& path);
-	virtual std::string fullPathForFilename(const std::string &filename) const override;
-	virtual std::string getStringFromFile(const std::string& filename);
-	virtual Data getDataFromFile(const std::string& filename);
-	virtual unsigned char* getFileData(const std::string& filename, const char* mode, ssize_t *size);
-	virtual bool isFileExistInternal(const std::string& strFilePath) const override;
-	virtual bool isDirectoryExistInternal(const std::string& dirPath) const override;
+	void addAutoSearchArchive(std::string_view path);
+	virtual std::string fullPathForFilename(std::string_view filename) const override;
+	virtual std::string getStringFromFile(std::string_view filename) const override;
+	virtual Data getDataFromFile(std::string_view filename) const override;
+	virtual bool isFileExistInternal(std::string_view strFilePath) const override;
+	virtual bool isDirectoryExistInternal(std::string_view dirPath) const override;
 	virtual bool init() override {
 		return FileUtilsInherit::init();
 	}
 
-private:
-	unsigned char* getFileDataFromArchive(const std::string& filename, ssize_t *size);
+public:
+	unsigned char* getFileData(std::string_view filename, const char* mode, ssize_t *size);
 
-	std::unordered_map<std::string, std::pair<unzFile, unz_file_pos> > _autoSearchArchive;
-	std::mutex _lock;
+private:
+	unsigned char* getFileDataFromArchive(std::string_view filename, ssize_t *size) const;
+
+	mutable std::unordered_map<std::string, std::pair<unzFile, unz_file_pos> > _autoSearchArchive;
+	mutable std::mutex _lock;
 };
 
 CustomFileUtils::CustomFileUtils()
 {
 }
 
-void CustomFileUtils::addAutoSearchArchive(const std::string& path)
+void CustomFileUtils::addAutoSearchArchive(std::string_view path)
 {
+	auto pathStr = std::string(path);
 	if (!this->isFileExist(path)) return;
 	unzFile file = nullptr;
-	file = unzOpen(FileUtils::getInstance()->getSuitableFOpen(path).c_str());
+	file = unzOpen(pathStr.c_str());
 	unz_file_info file_info;
 	do {
 		unz_file_pos entry;
@@ -70,45 +79,60 @@ void CustomFileUtils::addAutoSearchArchive(const std::string& path)
 	} while (unzGoToNextFile(file) == UNZ_OK);
 }
 
-std::string CustomFileUtils::fullPathForFilename(const std::string &filename) const
+std::string CustomFileUtils::fullPathForFilename(std::string_view filename) const
 {
-	auto it = _autoSearchArchive.find(filename);
+	auto key = std::string(filename);
+	auto it = _autoSearchArchive.find(key);
 	if (_autoSearchArchive.end() != it) {
-		return filename;
+		return key;
 	}
 	return FileUtilsInherit::fullPathForFilename(filename);
 }
 
-unsigned char* CustomFileUtils::getFileData(const std::string& filename, const char* mode, ssize_t *size)
+unsigned char* CustomFileUtils::getFileData(std::string_view filename, const char* mode, ssize_t *size)
 {
 	unsigned char* ret = getFileDataFromArchive(filename, size);
 	if (ret) return ret;
-	return FileUtilsInherit::getFileData(filename, mode, size);
+	auto data = FileUtilsInherit::getDataFromFile(filename);
+	if (size) *size = data.getSize();
+	unsigned char* buf = (unsigned char*)malloc(data.getSize());
+	memcpy(buf, data.getBytes(), data.getSize());
+	return buf;
 }
 
-bool CustomFileUtils::isFileExistInternal(const std::string& strFilePath) const
+bool CustomFileUtils::isFileExistInternal(std::string_view strFilePath) const
 {
-	auto it = _autoSearchArchive.find(strFilePath);
+	auto key = std::string(strFilePath);
+	auto it = _autoSearchArchive.find(key);
 	if (_autoSearchArchive.end() != it) {
 		return true;
 	}
 	return FileUtilsInherit::isFileExistInternal(strFilePath);
 }
 
-bool CustomFileUtils::isDirectoryExistInternal(const std::string& dirPath) const
+bool CustomFileUtils::isDirectoryExistInternal(std::string_view dirPath) const
 {
 	for (auto &it : _autoSearchArchive) {
 		if (it.first.size() <= dirPath.size()) continue;
-		if (!strncmp(it.first.c_str(), dirPath.c_str(), dirPath.size()) && it.first[dirPath.size()] == '/') {
+		if (!strncmp(it.first.c_str(), std::string(dirPath).c_str(), dirPath.size()) && it.first[dirPath.size()] == '/') {
 			return true;
 		}
 	}
-	return FileUtilsInherit::isDirectoryExistInternal(dirPath);
+	// Cannot call FileUtilsInherit::isDirectoryExistInternal because it's private in axmol's platform-specific FileUtils.
+	// Use stat() directly as fallback (same approach as FileUtilsAndroid::isDirectoryExistInternal).
+	if (dirPath.empty()) return false;
+	std::string path(dirPath);
+	if (!path.empty() && path.back() == '/') path.pop_back();
+	if (path.empty()) return false;
+	struct stat st;
+	if (stat(path.c_str(), &st) == 0) return S_ISDIR(st.st_mode);
+	return false;
 }
 
-unsigned char* CustomFileUtils::getFileDataFromArchive(const std::string& filename, ssize_t *size)
+unsigned char* CustomFileUtils::getFileDataFromArchive(std::string_view filename, ssize_t *size) const
 {
-	auto it = _autoSearchArchive.find(filename);
+	auto key = std::string(filename);
+	auto it = _autoSearchArchive.find(key);
 	if (_autoSearchArchive.end() != it) {
 		_lock.lock();
 		if (unzGoToFilePos(it->second.first, &it->second.second) != UNZ_OK) return nullptr;
@@ -117,14 +141,14 @@ unsigned char* CustomFileUtils::getFileDataFromArchive(const std::string& filena
 		unsigned char *buffer = (unsigned char*)malloc(fileInfo.uncompressed_size);
 		int readedSize = unzReadCurrentFile(it->second.first, buffer, static_cast<unsigned>(fileInfo.uncompressed_size));
 		_lock.unlock();
-		CCASSERT(readedSize == 0 || readedSize == (int)fileInfo.uncompressed_size, "the file size is wrong");
+		AXASSERT(readedSize == 0 || readedSize == (int)fileInfo.uncompressed_size, "the file size is wrong");
 		*size = fileInfo.uncompressed_size;
 		return buffer;
 	}
 	return nullptr;
 }
 
-cocos2d::Data CustomFileUtils::getDataFromFile(const std::string& filename)
+ax::Data CustomFileUtils::getDataFromFile(std::string_view filename) const
 {
 	ssize_t size;
 	unsigned char* buffer = getFileDataFromArchive(filename, &size);
@@ -136,27 +160,27 @@ cocos2d::Data CustomFileUtils::getDataFromFile(const std::string& filename)
 	return FileUtilsInherit::getDataFromFile(filename);
 }
 
-std::string CustomFileUtils::getStringFromFile(const std::string& filename)
+std::string CustomFileUtils::getStringFromFile(std::string_view filename) const
 {
 	Data data = getDataFromFile(filename);
 	if (data.isNull())
 		return "";
 
-	std::string ret((const char*)data.getBytes());
+	std::string ret((const char*)data.getBytes(), data.getSize());
 	return ret;
 }
 
-NS_CC_END
+}
 
-cocos2d::FileUtils *TVPCreateCustomFileUtils() {
-	cocos2d::CustomFileUtils *ret = new cocos2d::CustomFileUtils;
+ax::FileUtils *TVPCreateCustomFileUtils() {
+	ax::CustomFileUtils *ret = new ax::CustomFileUtils;
 	ret->init();
 	return ret;
 }
 
 void TVPAddAutoSearchArchive(const std::string &path)
 {
-	cocos2d::CustomFileUtils *fileutils =static_cast<cocos2d::CustomFileUtils*>(cocos2d::FileUtils::getInstance());
+	ax::CustomFileUtils *fileutils =static_cast<ax::CustomFileUtils*>(ax::FileUtils::getInstance());
 	fileutils->addAutoSearchArchive(path);
 }
 
@@ -165,7 +189,7 @@ void TVPAddAutoSearchArchive(const std::string &path)
 #include "ConfigManager/GlobalConfigManager.h"
 #include "tinyxml2/tinyxml2.h"
 
-USING_NS_CC;
+using namespace ax;
 
 static bool TVPCopyFolder(const std::string &from, const std::string &to) {
 	if (!TVPCheckExistentLocalFolder(to) && !TVPCreateFolders(to)) {
@@ -233,14 +257,14 @@ static const char *_adapted_skin_version = "1.3.4";
 
 bool TVPSkinManager::Check(const std::string &path)
 {
-	if (!cocos2d::FileUtils::getInstance()->isFileExist(path)) {
+	if (!ax::FileUtils::getInstance()->isFileExist(path)) {
 		return false;
 	}
 
 	tinyxml2::XMLDocument doc;
 
 	unzFile file = nullptr;
-	file = unzOpen(FileUtils::getInstance()->getSuitableFOpen(path).c_str());
+	file = unzOpen(path.c_str());
 	unz_file_info file_info;
 	do {
 		unz_file_pos entry;

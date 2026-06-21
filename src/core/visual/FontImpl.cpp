@@ -1,10 +1,10 @@
 #include "FontImpl.h"
 
 // ## fix error: unknown type name 'FT_Library'
-#include "freetype2/ft2build.h"
-#include "freetype2/freetype.h"
-#include "freetype2/ftsnames.h"
-#include "freetype2/ttnameid.h"
+#include "ft2build.h"
+#include "freetype/freetype.h"
+#include "freetype/ftsnames.h"
+#include "freetype/ttnameid.h"
 // #include FT_TRUETYPE_IDS_H
 // #include FT_SFNT_NAMES_H
 // #include FT_FREETYPE_H
@@ -24,7 +24,7 @@
 #ifdef _MSC_VER
 #pragma comment(lib,"freetype.lib")
 #endif
-#include "platform/CCFileUtils.h"
+#include "platform/FileUtils.h"
 #include "StorageImpl.h"
 #include "BinaryStream.h"
 
@@ -207,9 +207,9 @@ void TVPInitFontNames()
 		if (TVPEnumFontsProc(Android_GetInternalStoragePath() + "/default.ttf")) break;
 
 		{	// from internal storage
-			auto data = cocos2d::FileUtils::getInstance()->getDataFromFile("DroidSansFallback.ttf");
+			auto data = ax::FileUtils::getInstance()->getDataFromFile("DroidSansFallback.ttf");
 			if (TVPInternalEnumFonts(data.getBytes(), data.getSize(), "DroidSansFallback.ttf", [](TVPFontNamePathInfo* info)->tTJSBinaryStream* {
-				auto data = cocos2d::FileUtils::getInstance()->getDataFromFile(info->Path.AsStdString());
+				auto data = ax::FileUtils::getInstance()->getDataFromFile(info->Path.AsStdString());
 				tTVPMemoryStream *ret = new tTVPMemoryStream();
 				ret->WriteBuffer(data.getBytes(), data.getSize());
 				ret->SetPosition(0);
@@ -224,7 +224,7 @@ void TVPInitFontNames()
 		if (TVPEnumFontsProc(TJS_W("file://./c/windows/fonts/simhei.ttf"))) break;
 #endif
         
-        std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename("DroidSansFallback.ttf");
+        std::string fullPath = ax::FileUtils::getInstance()->fullPathForFilename("DroidSansFallback.ttf");
         if (TVPEnumFontsProc(fullPath)) break;
 	} while (false);
     if(TVPFontNames.GetCount() > 0)

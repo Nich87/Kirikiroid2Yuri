@@ -7,6 +7,6 @@ extern "C" {
 	extern void vfree(void *p);
 }
 #endif
-#ifdef CC_TARGET_OS_IPHONE
+#if defined(__APPLE__)
 #define lseek64 lseek
 #endif

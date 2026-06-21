@@ -83,8 +83,23 @@ class CAEStreamAL : public IAEStream {
 			bitsPerSample = 16;
 			break;
 		}
+#if LIBAVCODEC_VERSION_MAJOR >= 61
+		AVChannelLayout in_layout;
+		if (layout)
+			av_channel_layout_from_mask(&in_layout, layout);
+		else
+			av_channel_layout_default(&in_layout, audioFormat.m_channelLayout.Count());
+		AVChannelLayout out_layout;
+		av_channel_layout_default(&out_layout, in_layout.nb_channels);
+
+		swr_alloc_set_opts2(&swr_ctx,
+			&out_layout, swr_tgtFormat, audioFormat.m_sampleRate,
+			&in_layout, srcFormat, audioFormat.m_sampleRate,
+			0, NULL);
+#else
 		swr_ctx = swr_alloc_set_opts(NULL, layout, swr_tgtFormat, audioFormat.m_sampleRate,
 			layout, srcFormat, audioFormat.m_sampleRate, 0, NULL);
+#endif
 		tgt_frameSize = av_get_bytes_per_sample(swr_tgtFormat) * m_format.m_channelLayout.Count();
 		int result = swr_init(swr_ctx);
 		assert(swr_ctx && result >= 0);
