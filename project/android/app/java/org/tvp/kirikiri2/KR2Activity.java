@@ -716,6 +716,10 @@ public class KR2Activity extends AxmolActivity {
     public AxmolGLSurfaceView onCreateView() {
         AxmolGLSurfaceView glSurfaceView = new KR2GLSurfaceView(this);
     	hideSystemUI();
+
+        // EGL config: RGBA8888, 24-bit depth, 8-bit stencil (matches axmol defaults)
+        glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 24, 8);
+
         return glSurfaceView;
     }
     
