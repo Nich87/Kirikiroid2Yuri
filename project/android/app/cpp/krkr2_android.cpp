@@ -80,21 +80,21 @@ extern "C" {
 		env->ReleaseStringUTFChars(text, pszText);
 	}
 
-	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesBegin(JNIEnv * env, jobject thiz, jint id, jfloat x, jfloat y) {
+	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesBegin(JNIEnv * env, jclass clazz, jint id, jfloat x, jfloat y) {
 		intptr_t idlong = id;
 		Android_PushEvents([idlong, x, y](){
 			ax::Director::getInstance()->getGLView()->handleTouchesBegin(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 		});
 	}
 
-	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesEnd(JNIEnv * env, jobject thiz, jint id, jfloat x, jfloat y) {
+	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesEnd(JNIEnv * env, jclass clazz, jint id, jfloat x, jfloat y) {
 		intptr_t idlong = id;
 		Android_PushEvents([idlong, x, y](){
 			ax::Director::getInstance()->getGLView()->handleTouchesEnd(1, (intptr_t*)&idlong, (float*)&x, (float*)&y);
 		});
 	}
 
-	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesMove(JNIEnv * env, jobject thiz, jintArray ids, jfloatArray xs, jfloatArray ys) {
+	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesMove(JNIEnv * env, jclass clazz, jintArray ids, jfloatArray xs, jfloatArray ys) {
 		int size = env->GetArrayLength(ids);
 		if (size == 1) {
 			intptr_t idlong;
@@ -128,7 +128,7 @@ extern "C" {
 		});
 	}
 
-	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesCancel(JNIEnv * env, jobject thiz, jintArray ids, jfloatArray xs, jfloatArray ys) {
+	JNIEXPORT void JNICALL Java_org_tvp_kirikiri2_KR2Activity_nativeTouchesCancel(JNIEnv * env, jclass clazz, jintArray ids, jfloatArray xs, jfloatArray ys) {
 		int size = env->GetArrayLength(ids);
 		if (size == 1) {
 			intptr_t idlong;

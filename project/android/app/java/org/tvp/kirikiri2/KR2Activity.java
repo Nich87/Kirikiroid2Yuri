@@ -712,20 +712,12 @@ public class KR2Activity extends AxmolActivity {
         }
     }
     
-    //@Override
-    // ## fix private function
-//    public Cocos2dxGLSurfaceView onCreateView() {
-//        Cocos2dxGLSurfaceView glSurfaceView = new KR2GLSurfaceView(this);
-//    	hideSystemUI();
-//
-//        // this line is need on some device if we specify an alpha bits
-//        if(this.mGLContextAttrs[3] > 0) glSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-//
-//        Cocos2dxEGLConfigChooser chooser = new Cocos2dxEGLConfigChooser(this.mGLContextAttrs);
-//        glSurfaceView.setEGLConfigChooser(chooser);
-//
-//        return glSurfaceView;
-//    }
+    @Override
+    public AxmolGLSurfaceView onCreateView() {
+        AxmolGLSurfaceView glSurfaceView = new KR2GLSurfaceView(this);
+    	hideSystemUI();
+        return glSurfaceView;
+    }
     
     public int get_res_sd_operate_step() { return -1; }
 
